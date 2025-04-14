@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "843030421995",
+    "firebase_url": "https://riderapp-32b56-default-rtdb.firebaseio.com",
+    "project_id": "riderapp-32b56",
+    "storage_bucket": "riderapp-32b56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843030421995:android:32c5e9e446b24263bef9ae",
+        "android_client_info": {
+          "package_name": "edu.uga.cs.riderapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1gM110DS03SZ7Ys9kNqvhDTqLArBYTl4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
