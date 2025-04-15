@@ -12,8 +12,8 @@ RiderApp is an Android mobile application that allows for users to offer or requ
 
 ## Tools Utilized
 - Application: Android Studio, Gradle
-- Programming Language: Java\n
-- Version Control: GitHub\n
+- Programming Language: Java
+- Version Control: GitHub
 
 ## Installation
 Get started using:
