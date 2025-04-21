@@ -10,6 +10,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.fragments.LoginFragment;
+import edu.uga.cs.riderapp.fragments.SignUpFragment;
 
 public class AuthActivity extends AppCompatActivity {
 

@@ -12,17 +12,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.fragments.placeholder.PlaceholderContent;
+import edu.uga.cs.riderapp.models.Proposal;
+import edu.uga.cs.riderapp.models.User;
 
 /**
  * A fragment representing a list of Items.
  */
 public class ProposalListFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
+    private RecyclerView recyclerView;
+    private ProposalRecyclerViewAdapter adapter;
+
     private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
     private int mColumnCount = 1;
 
     /**
@@ -31,8 +37,6 @@ public class ProposalListFragment extends Fragment {
      */
     public ProposalListFragment() {
     }
-
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static ProposalListFragment newInstance(int columnCount) {
         ProposalListFragment fragment = new ProposalListFragment();
@@ -56,17 +60,70 @@ public class ProposalListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_proposal_list, container, false);
 
-        // Set the adapter
-        if (view instanceof RecyclerView) {
-            Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            recyclerView.setAdapter(new ProposalRecyclerViewAdapter(PlaceholderContent.ITEMS));
-        }
+        // Set up the RecyclerView
+        recyclerView = view.findViewById(R.id.list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // sample data, will delete later
+        List<Proposal> proposals = getProposals();
+        adapter = new ProposalRecyclerViewAdapter(proposals, proposal -> {
+            // todo: Handle item click
+            //showProposalDetails(proposal);
+        });
+
+        recyclerView.setAdapter(adapter);
+
         return view;
+    }
+
+    // todo: use this class to extract proposals from the firebase auth and create Proposal Objects with it
+    private List<Proposal> getProposals() {
+        List<Proposal> proposals = new ArrayList<>();
+
+        // Sample driver proposal (ride offer)
+        User driverJohn = new User("john@example.com", "John");
+        driverJohn.setName("John D.");
+        proposals.add(new Proposal(
+                "offer",
+                "Downtown Athens",
+                "UGA Main Campus",
+                driverJohn,
+                "Toyota Camry",
+                3
+        ));
+
+        // Sample driver proposal (ride offer)
+        User driverSarah = new User("sarah@example.com", "Sarah");
+        driverSarah.setName("Sarah M.");
+        proposals.add(new Proposal(
+                "offer",
+                "Atlanta Airport",
+                "UGA Campus",
+                driverSarah,
+                "Honda Accord",
+                2
+        ));
+
+        // Sample rider proposal (ride request)
+        User riderMike = new User("mike@example.com", "Mike");
+        riderMike.setName("Mike T.");
+        proposals.add(new Proposal(
+                "request",
+                "UGA Science Library",
+                "Athens Mall",
+                riderMike
+        ));
+
+        // Sample rider proposal (ride request)
+        User riderEmma = new User("emma@example.com", "Emma");
+        riderEmma.setName("Emma G.");
+        proposals.add(new Proposal(
+                "request",
+                "East Campus Village",
+                "Downtown Athens",
+                riderEmma
+        ));
+
+        return proposals;
     }
 }
