@@ -38,11 +38,19 @@ public class MainActivity extends AppCompatActivity {
             finish();
         });
 
+        /*
         loginButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AuthActivity.class);
             intent.putExtra("auth_mode", "login");
             startActivity(intent);
             finish();
+        });*/
+        // todo: delete this, used it for testing
+        loginButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+            startActivity(intent);
+            finish();
         });
+
     }
 }
