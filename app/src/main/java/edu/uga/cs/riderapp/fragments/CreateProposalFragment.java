@@ -7,8 +7,15 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.RadioGroup;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.models.Proposal;
+import edu.uga.cs.riderapp.models.User;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -16,6 +23,14 @@ import edu.uga.cs.riderapp.R;
  * create an instance of this fragment.
  */
 public class CreateProposalFragment extends Fragment {
+
+    private RadioGroup proposalTypeGroup;
+    private EditText startLocationEdit;
+    private EditText destinationEdit;
+    private EditText carModelEdit;
+    private EditText availableSeatsEdit;
+    private LinearLayout carDetailsLayout;
+    private Button submitButton;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -61,6 +76,111 @@ public class CreateProposalFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_create_proposal, container, false);
+        View view = inflater.inflate(R.layout.fragment_create_proposal, container, false);
+
+        // Initialize views
+        proposalTypeGroup = view.findViewById(R.id.proposalTypeGroup);
+        startLocationEdit = view.findViewById(R.id.startLocationEdit);
+        destinationEdit = view.findViewById(R.id.destinationEdit);
+        carModelEdit = view.findViewById(R.id.carModelEdit);
+        availableSeatsEdit = view.findViewById(R.id.availableSeatsEdit);
+        carDetailsLayout = view.findViewById(R.id.carDetailsLayout);
+        submitButton = view.findViewById(R.id.submitButton);
+
+        // Handle proposal type change
+        proposalTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.offerRadio) {
+                carDetailsLayout.setVisibility(View.VISIBLE);
+            } else {
+                carDetailsLayout.setVisibility(View.GONE);
+            }
+        });
+
+        // Submit button click handler
+        submitButton.setOnClickListener(v -> createProposal());
+        return view;
+    }
+
+    private void createProposal() {
+        // Get current user
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get basic fields
+        String startLocation = startLocationEdit.getText().toString().trim();
+        String destination = destinationEdit.getText().toString().trim();
+
+        if (startLocation.isEmpty() || destination.isEmpty()) {
+            Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
+
+        if (isOffer) {
+            // Validate offer fields
+            String carModel = carModelEdit.getText().toString().trim();
+            String seatsStr = availableSeatsEdit.getText().toString().trim();
+
+            if (carModel.isEmpty() || seatsStr.isEmpty()) {
+                Toast.makeText(getContext(), "Please fill all car details", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int availableSeats;
+            try {
+                availableSeats = Integer.parseInt(seatsStr);
+                if (availableSeats <= 0) {
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Please enter a valid number of seats", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Create ride offer
+            Proposal proposal = new Proposal(
+                    "offer",
+                    startLocation,
+                    destination,
+                    currentUser,
+                    carModel,
+                    availableSeats
+            );
+            saveProposal(proposal);
+            Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
+        } else {
+            // Create ride request
+            Proposal proposal = new Proposal(
+                    "request",
+                    startLocation,
+                    destination,
+                    currentUser
+            );
+            saveProposal(proposal);
+            Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
+        }
+        clearForm();
+    }
+
+    private User getCurrentUser() {
+        // todo: get the current user somehow
+        User testUser = new User("test@example.com", "Test User");
+        testUser.setName("Test User");
+        return testUser;
+    }
+
+    private void saveProposal(Proposal proposal) {
+        // todo: save proposal to firebase
+    }
+
+    private void clearForm() {
+        startLocationEdit.setText("");
+        destinationEdit.setText("");
+        carModelEdit.setText("");
+        availableSeatsEdit.setText("");
     }
 }
