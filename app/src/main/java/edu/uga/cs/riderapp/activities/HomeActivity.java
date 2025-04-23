@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,15 @@ import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.fragments.CreateProposalFragment;
 import edu.uga.cs.riderapp.fragments.ProposalListFragment;
 import edu.uga.cs.riderapp.models.User;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+
+
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -41,8 +51,7 @@ public class HomeActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
 
         // todo: find a way to get the current user. maybe from the intent?
-        //user = getCurrentUser();
-        //updateUserInfo();
+        getCurrentUserFromFirebase();
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -50,7 +59,7 @@ public class HomeActivity extends AppCompatActivity {
                     .commit();
         }
 
-        // Set click listeners for bottom navigation buttons
+
         findViewById(R.id.createRideBtn).setOnClickListener(v -> {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainer, new CreateProposalFragment())
@@ -73,20 +82,35 @@ public class HomeActivity extends AppCompatActivity {
 
         // Logout button click handler
         logoutButton.setOnClickListener(v -> {
-            // todo: make sure to clear out user data somehow
+            FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(HomeActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
         });
+
     }
 
-    private User getCurrentUser() {
-        if (getIntent().hasExtra("user")) {
-            return (User) getIntent().getSerializableExtra("user");
-        } else {
-            throw new NullPointerException();
-        }
+    private void getCurrentUserFromFirebase() {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    user = snapshot.getValue(User.class);
+                    updateUserInfo();
+                } else {
+                    Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void updateUserInfo() {
@@ -97,7 +121,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     // todo: uncomment for firebase
-    /*
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -105,5 +129,5 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
-    }*/
+    }
 }

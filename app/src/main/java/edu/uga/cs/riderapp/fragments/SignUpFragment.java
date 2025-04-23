@@ -28,7 +28,6 @@ import edu.uga.cs.riderapp.models.User;
 public class SignUpFragment extends Fragment {
 
     private EditText emailEditText, passwordEditText, nameEditText;
-    private Spinner roleSpinner;
     private Button signUpButton;
     private ProgressBar progressBar;
 
@@ -47,17 +46,12 @@ public class SignUpFragment extends Fragment {
         emailEditText = view.findViewById(R.id.email_edit_text);
         passwordEditText = view.findViewById(R.id.password_edit_text);
         nameEditText = view.findViewById(R.id.name_edit_text);
-        roleSpinner = view.findViewById(R.id.role_spinner);
         signUpButton = view.findViewById(R.id.sign_up_btn);
         progressBar = view.findViewById(R.id.progressBar);
 
         mAuth = FirebaseAuth.getInstance();
         databaseRef = FirebaseDatabase.getInstance().getReference("users");
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.roles_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        roleSpinner.setAdapter(adapter);
 
         signUpButton.setOnClickListener(v -> registerUser());
 
@@ -68,7 +62,7 @@ public class SignUpFragment extends Fragment {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
         String name = nameEditText.getText().toString().trim();
-        String role = roleSpinner.getSelectedItem().toString().toLowerCase();
+
 
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailEditText.setError("Invalid email format");
@@ -99,7 +93,7 @@ public class SignUpFragment extends Fragment {
                         if (firebaseUser != null) {
                             String userId = firebaseUser.getUid();
 
-                            User newUser = new User(userId, email, name, role, 0, new Date());
+                            User newUser = new User(userId, email, name, true, true, 0, new Date());
 
                             databaseRef.child(userId).setValue(newUser)
                                     .addOnSuccessListener(aVoid -> {

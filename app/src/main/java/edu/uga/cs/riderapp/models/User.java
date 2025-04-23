@@ -1,33 +1,39 @@
 package edu.uga.cs.riderapp.models;
 
+
 import java.util.Date;
 
 public class User {
     private String userId;
     private String email;
     private String name;
-    private String role;
+    private boolean isRider;
+    private boolean isDriver;
     private int points;
     private Date createdAt;
 
     public User() {
-        this.createdAt = new Date();
+        this.isRider = true;
+        this.isDriver = true;
         this.points = 0;
+        this.createdAt = new Date();
     }
 
     public User(String email, String name) {
         this.email = email;
         this.name = name;
+        this.isRider = true;
+        this.isDriver = true;
         this.points = 0;
-        this.role = null;
         this.createdAt = new Date();
     }
 
-    public User(String userId, String email, String name, String role, int points, Date createdAt) {
+    public User(String userId, String email, String name, boolean isRider, boolean isDriver, int points, Date createdAt) {
         this.userId = userId;
         this.email = email;
         this.name = name;
-        this.role = role;
+        this.isRider = isRider;
+        this.isDriver = isDriver;
         this.points = points;
         this.createdAt = createdAt;
     }
@@ -57,12 +63,20 @@ public class User {
         this.name = name;
     }
 
-    public String getRole() {
-        return role;
+    public boolean isRider() {
+        return isRider;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setRider(boolean rider) {
+        isRider = rider;
+    }
+
+    public boolean isDriver() {
+        return isDriver;
+    }
+
+    public void setDriver(boolean driver) {
+        isDriver = driver;
     }
 
     public int getPoints() {
@@ -80,5 +94,4 @@ public class User {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
-
 }
