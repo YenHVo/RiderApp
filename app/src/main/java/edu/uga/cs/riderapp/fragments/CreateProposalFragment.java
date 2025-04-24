@@ -17,6 +17,10 @@ import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link CreateProposalFragment#newInstance} factory method to
@@ -174,8 +178,20 @@ public class CreateProposalFragment extends Fragment {
     }
 
     private void saveProposal(Proposal proposal) {
-        // todo: save proposal to firebase
+        DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
+        String proposalId = proposalsRef.push().getKey();
+
+        if (proposalId != null) {
+            proposalsRef.child(proposalId).setValue(proposal)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Proposal saved to Firebase", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
     }
+
 
     private void clearForm() {
         startLocationEdit.setText("");

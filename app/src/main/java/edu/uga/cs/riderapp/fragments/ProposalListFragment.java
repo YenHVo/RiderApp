@@ -11,6 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +37,8 @@ public class ProposalListFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 1;
+    private List<Proposal> proposals = new ArrayList<>();
+
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -60,70 +69,115 @@ public class ProposalListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_proposal_list, container, false);
 
-        // Set up the RecyclerView
         recyclerView = view.findViewById(R.id.list);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // sample data, will delete later
-        List<Proposal> proposals = getProposals();
         adapter = new ProposalRecyclerViewAdapter(proposals, proposal -> {
             // todo: Handle item click
-            //showProposalDetails(proposal);
         });
 
         recyclerView.setAdapter(adapter);
 
+        loadProposalsFromFirebase();
+
         return view;
     }
 
-    // todo: use this class to extract proposals from the firebase auth and create Proposal Objects with it
-    private List<Proposal> getProposals() {
-        List<Proposal> proposals = new ArrayList<>();
+    private void loadProposalsFromFirebase() {
+        DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
 
-        // Sample driver proposal (ride offer)
-        User driverJohn = new User("john@example.com", "John");
-        driverJohn.setName("John D.");
-        proposals.add(new Proposal(
-                "offer",
-                "Downtown Athens",
-                "UGA Main Campus",
-                driverJohn,
-                "Toyota Camry",
-                3
-        ));
+        proposalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                proposals.clear();
 
-        // Sample driver proposal (ride offer)
-        User driverSarah = new User("sarah@example.com", "Sarah");
-        driverSarah.setName("Sarah M.");
-        proposals.add(new Proposal(
-                "offer",
-                "Atlanta Airport",
-                "UGA Campus",
-                driverSarah,
-                "Honda Accord",
-                2
-        ));
+                for (DataSnapshot proposalSnap : snapshot.getChildren()) {
+                    String type = proposalSnap.child("type").getValue(String.class);
+                    String startLocation = proposalSnap.child("startLocation").getValue(String.class);
+                    String destination = proposalSnap.child("destination").getValue(String.class);
 
-        // Sample rider proposal (ride request)
-        User riderMike = new User("mike@example.com", "Mike");
-        riderMike.setName("Mike T.");
-        proposals.add(new Proposal(
-                "request",
-                "UGA Science Library",
-                "Athens Mall",
-                riderMike
-        ));
+                    // Extract user object
+                    DataSnapshot userSnap = proposalSnap.child("user");
+                    User user = new User();
+                    user.setUserId(userSnap.child("userId").getValue(String.class));
+                    user.setEmail(userSnap.child("email").getValue(String.class));
+                    user.setName(userSnap.child("name").getValue(String.class));
+                    user.setPoints(userSnap.child("points").getValue(Integer.class));
+                    Long createdAtMillis = userSnap.child("createdAt").getValue(Long.class);
+                    if (createdAtMillis != null) {
+                        user.setCreatedAt(new java.util.Date(createdAtMillis));
+                    }
 
-        // Sample rider proposal (ride request)
-        User riderEmma = new User("emma@example.com", "Emma");
-        riderEmma.setName("Emma G.");
-        proposals.add(new Proposal(
-                "request",
-                "East Campus Village",
-                "Downtown Athens",
-                riderEmma
-        ));
+                    Proposal proposal;
+                    if ("offer".equals(type)) {
+                        String carModel = proposalSnap.child("carModel").getValue(String.class);
+                        int availableSeats = proposalSnap.child("availableSeats").getValue(Integer.class);
+                        proposal = new Proposal(type, startLocation, destination, user, carModel, availableSeats);
+                    } else {
+                        proposal = new Proposal(type, startLocation, destination, user);
+                    }
 
-        return proposals;
+                    proposals.add(proposal);
+                }
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
+    // todo: use this class to extract proposals from the firebase auth and create Proposal Objects with it
+   // private List<Proposal> getProposals() {
+    //    List<Proposal> proposals = new ArrayList<>();
+
+        // Sample driver proposal (ride offer)
+      //  User driverJohn = new User("john@example.com", "John");
+      //  driverJohn.setName("John D.");
+       // proposals.add(new Proposal(
+        //        "offer",
+        //        "Downtown Athens",
+        //        "UGA Main Campus",
+       //         driverJohn,
+       //         "Toyota Camry",
+       //         3
+      //  ));
+
+        // Sample driver proposal (ride offer)
+      //  User driverSarah = new User("sarah@example.com", "Sarah");
+        //driverSarah.setName("Sarah M.");
+        //proposals.add(new Proposal(
+          //      "offer",
+            //    "Atlanta Airport",
+              //  "UGA Campus",
+                //driverSarah,
+                //"Honda Accord",
+                //2
+        //));
+
+        // Sample rider proposal (ride request)
+       // User riderMike = new User("mike@example.com", "Mike");
+        //riderMike.setName("Mike T.");
+      //  proposals.add(new Proposal(
+       //         "request",
+      //          "UGA Science Library",
+       //         "Athens Mall",
+      //          riderMike
+  //      ));
+
+        // Sample rider proposal (ride request)
+     //   User riderEmma = new User("emma@example.com", "Emma");
+     //   riderEmma.setName("Emma G.");
+     //   proposals.add(new Proposal(
+     //           "request",
+      //          "East Campus Village",
+       //         "Downtown Athens",
+        //        riderEmma
+       // ));
+
+       // return proposals;
+   // }
+
