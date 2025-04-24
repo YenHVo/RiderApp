@@ -92,30 +92,27 @@ public class ProposalListFragment extends Fragment {
                 proposals.clear();
 
                 for (DataSnapshot proposalSnap : snapshot.getChildren()) {
+                    String proposalId = proposalSnap.getKey();
                     String type = proposalSnap.child("type").getValue(String.class);
                     String startLocation = proposalSnap.child("startLocation").getValue(String.class);
                     String destination = proposalSnap.child("destination").getValue(String.class);
+                    String userId = proposalSnap.child("userId").getValue(String.class);
 
-                    // Extract user object
-                    DataSnapshot userSnap = proposalSnap.child("user");
-                    User user = new User();
-                    user.setUserId(userSnap.child("userId").getValue(String.class));
-                    user.setEmail(userSnap.child("email").getValue(String.class));
-                    user.setName(userSnap.child("name").getValue(String.class));
-                    user.setPoints(userSnap.child("points").getValue(Integer.class));
-                    Long createdAtMillis = userSnap.child("createdAt").getValue(Long.class);
-                    if (createdAtMillis != null) {
-                        user.setCreatedAt(new java.util.Date(createdAtMillis));
-                    }
+                    Proposal proposal = new Proposal();
+                    proposal.setProposalId(proposalId);
+                    proposal.setType(type);
+                    proposal.setStartLocation(startLocation);
+                    proposal.setEndLocation(destination);
 
-                    Proposal proposal;
+
                     if ("offer".equals(type)) {
                         String carModel = proposalSnap.child("carModel").getValue(String.class);
-                        int availableSeats = proposalSnap.child("availableSeats").getValue(Integer.class);
-                        proposal = new Proposal(type, startLocation, destination, user, carModel, availableSeats);
-                    } else {
-                        proposal = new Proposal(type, startLocation, destination, user);
+                        Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
+                        proposal.setCar(carModel);
+                        proposal.setAvailableSeats(seats != null ? seats : 0);
                     }
+
+                    fetchUserById(userId, proposal);
 
                     proposals.add(proposal);
                 }
@@ -129,6 +126,32 @@ public class ProposalListFragment extends Fragment {
             }
         });
     }
+
+    private void fetchUserById(String userId, Proposal proposal) {
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+
+                if ("offer".equals(proposal.getType())) {
+                    proposal.setDriver(user);
+                } else {
+                    proposal.setRider(user);
+                }
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(getContext(), "Failed to userID.", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+    }
+
+
 }
     // todo: use this class to extract proposals from the firebase auth and create Proposal Objects with it
    // private List<Proposal> getProposals() {
