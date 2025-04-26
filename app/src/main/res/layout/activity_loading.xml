@@ -84,6 +84,40 @@
                 android:textColor="#666"
                 android:textSize="14sp"
                 android:gravity="center"/>
+
+            <LinearLayout
+                android:id="@+id/driverButtonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/driverRejectButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="REJECT"
+                    android:textColor="@android:color/black"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    android:backgroundTint="@android:color/transparent"
+                    android:padding="16dp"
+                    />
+
+                <Button
+                    android:id="@+id/driverAcceptButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ACCEPT"
+                    android:textColor="@android:color/white"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    android:backgroundTint="@color/black"
+                    android:padding="16dp"/>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Rider -->
@@ -122,6 +156,39 @@
                 android:textColor="#666"
                 android:textSize="14sp"
                 android:gravity="center"/>
+
+            <LinearLayout
+                android:id="@+id/riderButtonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/riderRejectButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="REJECT"
+                    android:textColor="@android:color/black"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    android:backgroundTint="@android:color/transparent"
+                    android:padding="16dp"/>
+
+                <Button
+                    android:id="@+id/riderAcceptButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ACCEPT"
+                    android:textColor="@android:color/white"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    android:backgroundTint="@color/black"
+                    android:padding="16dp"/>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

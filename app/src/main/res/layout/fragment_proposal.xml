@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:visibility="gone"
-            android:padding="8dp">
+            android:paddingTop="8dp">
 
             <Button
                 android:id="@+id/acceptButton"

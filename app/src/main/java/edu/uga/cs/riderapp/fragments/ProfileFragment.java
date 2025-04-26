@@ -1,7 +1,5 @@
 package edu.uga.cs.riderapp.fragments;
 
-
-
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -52,19 +50,15 @@ public class ProfileFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("ride_history");
 
-
         loadRideHistory();
-
         return view;
     }
-
 
     private void loadRideHistory() {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) return;
 
         String userId = user.getUid();
-
 
         databaseReference.orderByChild("driverId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -83,7 +77,6 @@ public class ProfileFragment extends Fragment {
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {}
                 });
-
 
         databaseReference.orderByChild("riderId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {

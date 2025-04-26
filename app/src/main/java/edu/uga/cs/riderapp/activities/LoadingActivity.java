@@ -36,6 +36,9 @@ public class LoadingActivity extends AppCompatActivity {
     private TextView loadingText, subText;
     private LinearLayout driverAcceptedLayout, riderAcceptedLayout;
     private TextView driverMatchDetails, riderMatchDetails;
+    private LinearLayout driverButtonContainer, riderButtonContainer;
+    private Button driverAcceptButton, driverRejectButton;
+    private Button riderAcceptButton, riderRejectButton;
     private Button cancelButton;
     private LinearLayout dualButtonContainer;
     private Button backButton, completeButton;
@@ -80,12 +83,22 @@ public class LoadingActivity extends AppCompatActivity {
         dualButtonContainer = findViewById(R.id.dualButtonContainer);
         backButton = findViewById(R.id.backButton);
         completeButton = findViewById(R.id.completeButton);
+        driverButtonContainer = findViewById(R.id.driverButtonContainer);
+        riderButtonContainer = findViewById(R.id.riderButtonContainer);
+        driverAcceptButton = findViewById(R.id.driverAcceptButton);
+        driverRejectButton = findViewById(R.id.driverRejectButton);
+        riderAcceptButton = findViewById(R.id.riderAcceptButton);
+        riderRejectButton = findViewById(R.id.riderRejectButton);
     }
 
     private void setupButtonListeners() {
         cancelButton.setOnClickListener(v -> cancelProposal());
         backButton.setOnClickListener(v -> navigateToHome());
         completeButton.setOnClickListener(v -> markRideCompleted());
+        driverAcceptButton.setOnClickListener(v -> acceptProposal());
+        driverRejectButton.setOnClickListener(v -> rejectProposal());
+        riderAcceptButton.setOnClickListener(v -> acceptProposal());
+        riderRejectButton.setOnClickListener(v -> rejectProposal());
     }
 
     private void setupDatabaseListener() {
@@ -155,16 +168,13 @@ public class LoadingActivity extends AppCompatActivity {
                             proposal.getEndLocation()
                     ));
                 }
-
                 @Override
                 public void onCancelled(DatabaseError error) { }
             });
         }
-
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.VISIBLE);
     }
-
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
@@ -205,6 +215,53 @@ public class LoadingActivity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> Toast.makeText(LoadingActivity.this, "Failed to cancel proposal", Toast.LENGTH_SHORT).show());
         }
+    }
+
+    private void acceptProposal() {
+        if (proposalRef != null) {
+            proposalRef.child("status").setValue("accepted")
+                    .addOnSuccessListener(aVoid -> {
+                        // Hide accept/reject buttons and show the dual buttons at bottom
+                        if (isDriver) {
+                            driverButtonContainer.setVisibility(View.GONE);
+                        } else {
+                            riderButtonContainer.setVisibility(View.GONE);
+                        }
+                        dualButtonContainer.setVisibility(View.VISIBLE);
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(LoadingActivity.this, "Failed to accept proposal", Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
+
+    private void rejectProposal() {
+        if (proposalRef != null) {
+            proposalRef.child("status").setValue("pending")
+                    .addOnSuccessListener(aVoid -> {
+                        // Reset to waiting state
+                        resetToWaitingState();
+                        Toast.makeText(LoadingActivity.this, "Proposal rejected", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(LoadingActivity.this, "Failed to reject proposal", Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
+
+    private void resetToWaitingState() {
+        progressBar.setVisibility(View.VISIBLE);
+        loadingText.setVisibility(View.VISIBLE);
+        loadingText.setText("Waiting for a match...");
+        subText.setVisibility(View.VISIBLE);
+
+        driverAcceptedLayout.setVisibility(View.GONE);
+        riderAcceptedLayout.setVisibility(View.GONE);
+        driverButtonContainer.setVisibility(View.GONE);
+        riderButtonContainer.setVisibility(View.GONE);
+
+        cancelButton.setVisibility(View.VISIBLE);
+        dualButtonContainer.setVisibility(View.GONE);
     }
 
     private void navigateToHome() {
