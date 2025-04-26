@@ -157,7 +157,7 @@ public class CreateProposalFragment extends Fragment {
                     carModel,
                     availableSeats
             );
-            saveProposal(proposal);
+            saveProposal(proposal, isOffer);
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
         } else {
             Proposal proposal = new Proposal(
@@ -166,12 +166,10 @@ public class CreateProposalFragment extends Fragment {
                     endLocation,
                     currentUser.getUserId()
             );
-            saveProposal(proposal);
+            saveProposal(proposal, isOffer);
             Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
         }
         clearForm();
-        Intent intent = new Intent(getActivity(), LoadingActivity.class);
-        startActivity(intent);
     }
 
     private User getCurrentUser() {
@@ -183,19 +181,29 @@ public class CreateProposalFragment extends Fragment {
         }
     }
 
-    private void saveProposal(Proposal proposal) {
+    private void saveProposal(Proposal proposal, boolean isDriver) {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
         String proposalId = proposalsRef.push().getKey();
 
-        if (proposalId != null) {
-            proposalsRef.child(proposalId).setValue(proposal)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "Proposal saved to Firebase", Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
+        if (proposalId == null) {
+            Toast.makeText(getContext(), "Failed to create proposal ID", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        proposalsRef.child(proposalId).setValue(proposal)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();
+                    clearForm();
+
+                    // Start LoadingActivity after successful save
+                    Intent intent = new Intent(getActivity(), LoadingActivity.class);
+                    intent.putExtra("proposalId", proposalId);
+                    intent.putExtra("isDriver", isDriver);
+                    startActivity(intent);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to save: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     private void clearForm() {
