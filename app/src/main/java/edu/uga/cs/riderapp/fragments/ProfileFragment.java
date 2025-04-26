@@ -42,7 +42,7 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        userNameTextView = view.findViewById(R.id.textViewUserName);
+
         recyclerView = view.findViewById(R.id.recyclerViewRideHistory);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         rideHistoryList = new ArrayList<>();
@@ -52,19 +52,12 @@ public class ProfileFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("ride_history");
 
-        loadUserProfile();
+
         loadRideHistory();
 
         return view;
     }
 
-    private void loadUserProfile() {
-        FirebaseUser user = auth.getCurrentUser();
-        if (user != null) {
-            String displayName = user.getDisplayName();
-            userNameTextView.setText(displayName != null ? displayName : "User");
-        }
-    }
 
     private void loadRideHistory() {
         FirebaseUser user = auth.getCurrentUser();
@@ -72,7 +65,7 @@ public class ProfileFragment extends Fragment {
 
         String userId = user.getUid();
 
-        // First fetch where user is driver
+
         databaseReference.orderByChild("driverId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -91,7 +84,7 @@ public class ProfileFragment extends Fragment {
                     public void onCancelled(@NonNull DatabaseError error) {}
                 });
 
-        // Then fetch where user is rider
+
         databaseReference.orderByChild("riderId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
