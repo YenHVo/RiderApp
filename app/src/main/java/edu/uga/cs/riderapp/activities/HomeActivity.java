@@ -68,7 +68,7 @@ public class HomeActivity extends AppCompatActivity {
                     .commit();
         });
 
-        // todo: profile fragment?
+        //todo: profile fragment?
         /*
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
             getSupportFragmentManager().beginTransaction()
