@@ -14,13 +14,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.fragments.CreateProposalFragment;
 import edu.uga.cs.riderapp.fragments.ProposalListFragment;
 import edu.uga.cs.riderapp.models.User;
 
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -61,19 +61,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
 
-
-        findViewById(R.id.createRideBtn).setOnClickListener(v -> {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new CreateProposalFragment())
-                    .commit();
-        });
-
-        findViewById(R.id.homeBtn).setOnClickListener(v -> {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new ProposalListFragment())
-                    .commit();
-        });
-
         //todo: profile fragment?
         /*
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
@@ -81,6 +68,26 @@ public class HomeActivity extends AppCompatActivity {
                     .replace(R.id.fragmentContainer, new ProfileFragment())
                     .commit();
         });*/
+
+        findViewById(R.id.createRideBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new CreateProposalFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
+        findViewById(R.id.homeBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProposalListFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
 
         // Logout button click handler
         logoutButton.setOnClickListener(v -> {
@@ -90,7 +97,6 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-
     }
 
     private void getCurrentUserFromFirebase() {
@@ -116,14 +122,11 @@ public class HomeActivity extends AppCompatActivity {
                 }
             });
         } else {
-
             Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
-
             startActivity(new Intent(HomeActivity.this, MainActivity.class));
             finish();
         }
     }
-
 
     private void updateUserInfo() {
         if (user != null) {
@@ -133,7 +136,6 @@ public class HomeActivity extends AppCompatActivity {
             Toast.makeText(HomeActivity.this, "User info not available", Toast.LENGTH_SHORT).show();
         }
     }
-
 
     @Override
     protected void onStart() {

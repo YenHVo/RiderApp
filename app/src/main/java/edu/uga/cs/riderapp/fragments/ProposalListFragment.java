@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -128,28 +129,39 @@ public class ProposalListFragment extends Fragment {
     }
 
     private void fetchUserById(String userId, Proposal proposal) {
+
+        if (userId == null) {
+            Log.e("ProposalListFragment", "User ID is null, cannot fetch user data.");
+            return; // Exit the method if userId is null
+        }
+
+
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
+                if (snapshot.exists()) {
+                    User user = snapshot.getValue(User.class);
 
-                if ("offer".equals(proposal.getType())) {
-                    proposal.setDriverId(userId);
+                    if ("offer".equals(proposal.getType())) {
+                        proposal.setDriverId(userId);
+                    } else {
+                        proposal.setRiderId(userId);
+                    }
+
+                    adapter.notifyDataSetChanged();
                 } else {
-                    proposal.setRiderId(userId);
+                    Log.e("ProposalListFragment", "User not found in database for ID: " + userId);
                 }
-
-                adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Toast.makeText(getContext(), "Failed to userID.", Toast.LENGTH_SHORT).show();
-
+                Log.e("ProposalListFragment", "Database error: " + error.getMessage());
             }
         });
     }
+
 
 
 }
