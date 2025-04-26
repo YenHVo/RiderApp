@@ -1,5 +1,6 @@
 package edu.uga.cs.riderapp.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -14,6 +15,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.activities.HomeActivity;
+import edu.uga.cs.riderapp.activities.LoadingActivity;
+import edu.uga.cs.riderapp.activities.MainActivity;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
 
@@ -108,13 +112,11 @@ public class CreateProposalFragment extends Fragment {
     }
 
     private void createProposal() {
-
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
-
 
         String startLocation = startLocationEdit.getText().toString().trim();
         String endLocation = endLocationEdit.getText().toString().trim();
@@ -147,7 +149,6 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
-
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
@@ -159,7 +160,6 @@ public class CreateProposalFragment extends Fragment {
             saveProposal(proposal);
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
         } else {
-
             Proposal proposal = new Proposal(
                     "request",
                     startLocation,
@@ -170,6 +170,8 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
         }
         clearForm();
+        Intent intent = new Intent(getActivity(), LoadingActivity.class);
+        startActivity(intent);
     }
 
     private User getCurrentUser() {

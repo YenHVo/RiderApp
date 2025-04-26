@@ -104,13 +104,42 @@ public class LoadingActivity extends AppCompatActivity {
     private void setupDatabaseListener() {
         proposalRef = FirebaseDatabase.getInstance().getReference("accepted_rides").child(proposalId);
 
-        proposalRef.addValueEventListener(new ValueEventListener() {
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     Proposal proposal = snapshot.getValue(Proposal.class);
                     if (proposal != null && "accepted".equals(proposal.getStatus())) {
                         proposalAccepted(proposal);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoadingActivity.this, "Failed to load proposal info", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        proposalRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Proposal proposal = snapshot.getValue(Proposal.class);
+                    if (proposal != null) {
+                        // Handle all possible statuses
+                        switch (proposal.getStatus()) {
+                            case "accepted":
+                                proposalAccepted(proposal);
+                                break;
+                            case "pending":
+                                resetToWaitingState();
+                                break;
+                            case "cancelled":
+                            case "completed":
+                                navigateToHome();
+                                break;
+                        }
                     }
                 }
             }
