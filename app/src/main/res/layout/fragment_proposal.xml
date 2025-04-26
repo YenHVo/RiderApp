@@ -75,5 +75,36 @@
             android:ellipsize="end"
             tools:text="Description"/>
 
+        <LinearLayout
+            android:id="@+id/actionButtonsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:padding="8dp">
+
+            <Button
+                android:id="@+id/acceptButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="ACCEPT"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/black"/>
+
+            <Button
+                android:id="@+id/cancelButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="CANCEL"
+                android:textColor="@android:color/black"
+                android:backgroundTint="@android:color/white"
+                app:strokeColor="@android:color/black"
+                app:strokeWidth="1dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

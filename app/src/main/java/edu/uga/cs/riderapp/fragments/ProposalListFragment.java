@@ -1,6 +1,7 @@
 package edu.uga.cs.riderapp.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.activities.LoadingActivity;
 import edu.uga.cs.riderapp.fragments.placeholder.PlaceholderContent;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
@@ -33,13 +35,11 @@ import edu.uga.cs.riderapp.models.User;
  */
 public class ProposalListFragment extends Fragment {
 
+    private static final String ARG_USER_ID = "user_id";
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
-
-    private static final String ARG_COLUMN_COUNT = "column-count";
-    private int mColumnCount = 1;
     private List<Proposal> proposals = new ArrayList<>();
-
+    private String currentUserId;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -48,10 +48,10 @@ public class ProposalListFragment extends Fragment {
     public ProposalListFragment() {
     }
     @SuppressWarnings("unused")
-    public static ProposalListFragment newInstance(int columnCount) {
+    public static ProposalListFragment newInstance(String userId) {
         ProposalListFragment fragment = new ProposalListFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
+        args.putString(ARG_USER_ID, userId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -59,9 +59,8 @@ public class ProposalListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+            currentUserId = getArguments().getString(ARG_USER_ID);
         }
     }
 
@@ -73,12 +72,21 @@ public class ProposalListFragment extends Fragment {
         recyclerView = view.findViewById(R.id.list);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new ProposalRecyclerViewAdapter(proposals, proposal -> {
-            // todo: Handle item click
+        adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
+            public void onAcceptClick(Proposal proposal) {
+                boolean isDriver = "request".equals(proposal.getType());
+
+                Intent intent = new Intent(getActivity(), LoadingActivity.class);
+                intent.putExtra("proposalId", proposal.getProposalId());
+                intent.putExtra("isDriver", isDriver);
+                startActivity(intent);
+            }
+            public void onCancelClick(Proposal proposal, View actionButtonsLayout) {
+                actionButtonsLayout.setVisibility(View.GONE);
+            }
         });
 
         recyclerView.setAdapter(adapter);
-
         loadProposalsFromFirebase();
 
         return view;
@@ -114,7 +122,6 @@ public class ProposalListFragment extends Fragment {
                     }
 
                     fetchUserById(userId, proposal);
-
                     proposals.add(proposal);
                 }
 
@@ -129,12 +136,10 @@ public class ProposalListFragment extends Fragment {
     }
 
     private void fetchUserById(String userId, Proposal proposal) {
-
         if (userId == null) {
             Log.e("ProposalListFragment", "User ID is null, cannot fetch user data.");
             return; // Exit the method if userId is null
         }
-
 
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -161,9 +166,6 @@ public class ProposalListFragment extends Fragment {
             }
         });
     }
-
-
-
 }
     // todo: use this class to extract proposals from the firebase auth and create Proposal Objects with it
    // private List<Proposal> getProposals() {

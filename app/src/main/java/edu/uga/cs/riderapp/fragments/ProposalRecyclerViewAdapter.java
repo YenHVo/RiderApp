@@ -4,8 +4,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.databinding.FragmentProposalBinding;
 import edu.uga.cs.riderapp.models.Proposal;
 import java.text.SimpleDateFormat;
@@ -18,7 +21,8 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
     private final OnProposalClickListener listener;
 
     public interface OnProposalClickListener {
-        void onProposalClick(Proposal proposal);
+        void onAcceptClick(Proposal proposal);
+        void onCancelClick(Proposal proposal, View actionButtonsLayout);
     }
 
     public ProposalRecyclerViewAdapter(List<Proposal> items, OnProposalClickListener listener) {
@@ -42,10 +46,18 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
         holder.bind(proposal);
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onProposalClick(proposal);
-            }
+            boolean isVisible = holder.actionButtonsLayout.getVisibility() == View.VISIBLE;
+            holder.actionButtonsLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
         });
+
+        // Handle button clicks
+        holder.acceptButton.setOnClickListener(v -> {
+            listener.onAcceptClick(proposal);
+            holder.actionButtonsLayout.setVisibility(View.GONE);
+        });
+
+        holder.cancelButton.setOnClickListener(v ->
+                listener.onCancelClick(proposal, holder.actionButtonsLayout));
     }
 
     @Override
@@ -53,13 +65,19 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
         return proposals.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         private final FragmentProposalBinding binding;
         private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        public final LinearLayout actionButtonsLayout;
+        public final Button acceptButton;
+        public final Button cancelButton;
 
         public ViewHolder(FragmentProposalBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+            actionButtonsLayout = binding.actionButtonsLayout;
+            acceptButton = binding.acceptButton;
+            cancelButton = binding.cancelButton;
         }
 
         public void bind(Proposal proposal) {
@@ -98,6 +116,7 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
                 details = "Looking for a ride";
             }
             binding.proposalDetails.setText(details);
+            actionButtonsLayout.setVisibility(View.GONE);
         }
     }
 }
