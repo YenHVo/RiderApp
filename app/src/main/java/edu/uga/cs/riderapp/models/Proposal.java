@@ -7,46 +7,54 @@ public class Proposal {
     private String type;
     private String startLocation;
     private String endLocation;
-    private User driver;
-    private User rider;
+    private String driverId;
+    private String riderId;
     private String car;
     private String status;
     private Date createdAt;
     private int availableSeats;
+    private boolean confirmedByDriver;
+    private boolean confirmedByRider;
+    private String driverName;
+    private String riderName;
 
     public Proposal() {
         this.createdAt = new Date();
         this.status = "pending";
+        this.confirmedByDriver = false;
+        this.confirmedByRider = false;
     }
 
     // For Drivers
     public Proposal(String type, String startLocation, String endLocation,
-                    User user, String car, int availableSeats) {
+                    String driverId, String car, int availableSeats) {
         this.type = type;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
+        this.driverId = driverId;
         this.car = car;
+        this.availableSeats = availableSeats;
         this.status = "pending";
         this.createdAt = new Date();
-        this.availableSeats = availableSeats;
-        this.driver = user;
-        this.rider = null;
+        this.confirmedByDriver = false;
+        this.confirmedByRider = false;
     }
 
     // For Riders
     public Proposal(String type, String startLocation, String endLocation,
-                    User user) {
+                    String riderId) {
         this.type = type;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
-        this.rider = user;
-        this.driver = null;
+        this.riderId = riderId;
         this.car = null;
         this.status = "pending";
         this.createdAt = new Date();
+        this.confirmedByDriver = false;
+        this.confirmedByRider = false;
     }
 
-    // Getters and Setters
+
     public String getProposalId() {
         return proposalId;
     }
@@ -83,22 +91,37 @@ public class Proposal {
         this.endLocation = endLocation;
     }
 
-    public User getDriver() {
-        return driver;
+    public String getDriverId() {
+        return driverId;
     }
 
-    public void setDriver(User driver) {
-        this.driver = driver;
+    public void setDriverId(String driverId) {
+        this.driverId = driverId;
     }
 
-    public User getRider() {
-        return rider;
+    public String getRiderId() {
+        return riderId;
     }
 
-    public void setRider(User rider) {
-        this.rider = rider;
+    public void setRiderId(String riderId) {
+        this.riderId = riderId;
     }
 
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public String getRiderName() {
+        return riderName;
+    }
+
+    public void setRiderName(String riderName) {
+        this.riderName = riderName;
+    }
     public String getCar() {
         return car;
     }
@@ -131,4 +154,19 @@ public class Proposal {
         this.availableSeats = availableSeats;
     }
 
+    public boolean isConfirmedByDriver() {
+        return confirmedByDriver;
+    }
+
+    public void setConfirmedByDriver(boolean confirmedByDriver) {
+        this.confirmedByDriver = confirmedByDriver;
+    }
+
+    public boolean isConfirmedByRider() {
+        return confirmedByRider;
+    }
+
+    public void setConfirmedByRider(boolean confirmedByRider) {
+        this.confirmedByRider = confirmedByRider;
+    }
 }

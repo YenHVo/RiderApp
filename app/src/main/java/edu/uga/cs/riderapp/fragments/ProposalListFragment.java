@@ -95,14 +95,14 @@ public class ProposalListFragment extends Fragment {
                     String proposalId = proposalSnap.getKey();
                     String type = proposalSnap.child("type").getValue(String.class);
                     String startLocation = proposalSnap.child("startLocation").getValue(String.class);
-                    String destination = proposalSnap.child("destination").getValue(String.class);
+                    String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                     String userId = proposalSnap.child("userId").getValue(String.class);
 
                     Proposal proposal = new Proposal();
                     proposal.setProposalId(proposalId);
                     proposal.setType(type);
                     proposal.setStartLocation(startLocation);
-                    proposal.setEndLocation(destination);
+                    proposal.setEndLocation(endLocation);
 
 
                     if ("offer".equals(type)) {
@@ -135,9 +135,9 @@ public class ProposalListFragment extends Fragment {
                 User user = snapshot.getValue(User.class);
 
                 if ("offer".equals(proposal.getType())) {
-                    proposal.setDriver(user);
+                    proposal.setDriverId(userId);
                 } else {
-                    proposal.setRider(user);
+                    proposal.setRiderId(userId);
                 }
 
                 adapter.notifyDataSetChanged();

@@ -63,18 +63,16 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
         }
 
         public void bind(Proposal proposal) {
-            // Set proposal name based on type and user
             String proposalName;
-            if (proposal.getDriver() != null) {
-                proposalName = proposal.getDriver().getName() + "'s Ride";
-            } else if (proposal.getRider() != null) {
-                proposalName = proposal.getRider().getName() + "'s Request";
+            if (proposal.getDriverName() != null) {
+                proposalName = proposal.getDriverName() + "'s Ride";
+            } else if (proposal.getRiderName() != null) {
+                proposalName = proposal.getRiderName() + "'s Request";
             } else {
                 proposalName = "Ride Proposal";
             }
             binding.proposalName.setText(proposalName);
 
-            // Set type (capitalize first letter)
             String type = proposal.getType();
             if (type != null && !type.isEmpty()) {
                 type = type.substring(0, 1).toUpperCase() + type.substring(1);

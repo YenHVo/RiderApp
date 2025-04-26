@@ -14,6 +14,14 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
@@ -32,6 +40,8 @@ public class LoadingActivity extends AppCompatActivity {
     private LinearLayout dualButtonContainer;
     private Button backButton, completeButton;
 
+    private DatabaseReference proposalRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +55,9 @@ public class LoadingActivity extends AppCompatActivity {
 
         proposalId = getIntent().getStringExtra("proposalId");
         isDriver = getIntent().getBooleanExtra("isDriver", false);
-        currentUserId = "Sarah J."; // todo: find a way to find the current user's id
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+
         if (proposalId == null || currentUserId == null) {
             finish();
             return;
@@ -77,9 +89,24 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
     private void setupDatabaseListener() {
-        // todo: initialize database references to listen for proposal status changes
-        //  for example: when the proposal goes from 'pending' to 'accepted'
-        //  in the case of accepted, call function proposalAccepted(proposal)
+        proposalRef = FirebaseDatabase.getInstance().getReference("accepted_rides").child(proposalId);
+
+        proposalRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Proposal proposal = snapshot.getValue(Proposal.class);
+                    if (proposal != null && "accepted".equals(proposal.getStatus())) {
+                        proposalAccepted(proposal);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoadingActivity.this, "Failed to load proposal info", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void proposalAccepted(Proposal proposal) {
@@ -87,39 +114,97 @@ public class LoadingActivity extends AppCompatActivity {
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
 
-        // todo: find a way to display the driver/rider match details with the database
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+
         if (isDriver) {
             driverAcceptedLayout.setVisibility(View.VISIBLE);
-            driverMatchDetails.setText(String.format(
-                    "Rider: %s\nPickup: %s\nDropoff: %s",
-                    proposal.getRider().getName(),
-                    proposal.getStartLocation(),
-                    proposal.getEndLocation()
-            ));
+
+
+            usersRef.child(proposal.getRiderId()).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    String riderName = snapshot.child("name").getValue(String.class);
+
+                    driverMatchDetails.setText(String.format(
+                            "Rider: %s\nPickup: %s\nDropoff: %s",
+                            riderName != null ? riderName : "Unknown",
+                            proposal.getStartLocation(),
+                            proposal.getEndLocation()
+                    ));
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) { }
+            });
+
         } else {
             riderAcceptedLayout.setVisibility(View.VISIBLE);
-            riderMatchDetails.setText(String.format(
-                    "Driver: %s\nCar: %s\nPickup: %s\nDropoff: %s",
-                    proposal.getDriver().getName(),
-                    proposal.getCar(),
-                    proposal.getStartLocation(),
-                    proposal.getEndLocation()
-            ));
+
+
+            usersRef.child(proposal.getDriverId()).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    String driverName = snapshot.child("name").getValue(String.class);
+                    String carModel = snapshot.child("carModel").getValue(String.class); // optional if you want car
+
+                    riderMatchDetails.setText(String.format(
+                            "Driver: %s\nCar: %s\nPickup: %s\nDropoff: %s",
+                            driverName != null ? driverName : "Unknown",
+                            carModel != null ? carModel : "Unknown",
+                            proposal.getStartLocation(),
+                            proposal.getEndLocation()
+                    ));
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) { }
+            });
         }
-        
+
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.VISIBLE);
     }
 
+
     private void markRideCompleted() {
-        // todo: mark that the current user has completed the ride. if the other user (rider/driver)
-        //  has not completed the ride, have it display "WAITING FOR OTHER PARTY"
-        //  once both have completed the ride, have it update the points accordingly
+        if (proposalRef == null) return;
+
+        String completedField = isDriver ? "confirmedByDriver" : "confirmedByRider";
+        proposalRef.child(completedField).setValue(true);
+
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
+                Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
+
+                if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
+
+                    proposalRef.child("status").setValue("completed");
+
+                    Toast.makeText(LoadingActivity.this, "Ride completed!", Toast.LENGTH_SHORT).show();
+                    navigateToHome();
+                } else {
+                    Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoadingActivity.this, "Failed to complete ride", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void cancelProposal() {
-        // todo: change the proposal status in the database to 'cancelled'
-        //  call function navigateHome
+        if (proposalRef != null) {
+            proposalRef.child("status").setValue("cancelled")
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(LoadingActivity.this, "Proposal cancelled", Toast.LENGTH_SHORT).show();
+                        navigateToHome();
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(LoadingActivity.this, "Failed to cancel proposal", Toast.LENGTH_SHORT).show());
+        }
     }
 
     private void navigateToHome() {

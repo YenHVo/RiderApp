@@ -17,6 +17,8 @@ import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -30,7 +32,7 @@ public class CreateProposalFragment extends Fragment {
 
     private RadioGroup proposalTypeGroup;
     private EditText startLocationEdit;
-    private EditText destinationEdit;
+    private EditText endLocationEdit;
     private EditText carModelEdit;
     private EditText availableSeatsEdit;
     private LinearLayout carDetailsLayout;
@@ -85,7 +87,7 @@ public class CreateProposalFragment extends Fragment {
         // Initialize views
         proposalTypeGroup = view.findViewById(R.id.proposalTypeGroup);
         startLocationEdit = view.findViewById(R.id.startLocationEdit);
-        destinationEdit = view.findViewById(R.id.destinationEdit);
+        endLocationEdit = view.findViewById(R.id.endLocationEdit);
         carModelEdit = view.findViewById(R.id.carModelEdit);
         availableSeatsEdit = view.findViewById(R.id.availableSeatsEdit);
         carDetailsLayout = view.findViewById(R.id.carDetailsLayout);
@@ -106,18 +108,18 @@ public class CreateProposalFragment extends Fragment {
     }
 
     private void createProposal() {
-        // Get current user
+
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Get basic fields
-        String startLocation = startLocationEdit.getText().toString().trim();
-        String destination = destinationEdit.getText().toString().trim();
 
-        if (startLocation.isEmpty() || destination.isEmpty()) {
+        String startLocation = startLocationEdit.getText().toString().trim();
+        String endLocation = endLocationEdit.getText().toString().trim();
+
+        if (startLocation.isEmpty() || endLocation.isEmpty()) {
             Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -145,24 +147,24 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
-            // Create ride offer
+
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
-                    destination,
-                    currentUser,
+                    endLocation,
+                    currentUser.getUserId(),
                     carModel,
                     availableSeats
             );
             saveProposal(proposal);
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
         } else {
-            // Create ride request
+
             Proposal proposal = new Proposal(
                     "request",
                     startLocation,
-                    destination,
-                    currentUser
+                    endLocation,
+                    currentUser.getUserId()
             );
             saveProposal(proposal);
             Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
@@ -171,10 +173,12 @@ public class CreateProposalFragment extends Fragment {
     }
 
     private User getCurrentUser() {
-        // todo: get the current user somehow
-        User testUser = new User("test@example.com", "Test User");
-        testUser.setName("Test User");
-        return testUser;
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            return new User(firebaseUser.getEmail(), firebaseUser.getDisplayName());
+        } else {
+            return null;
+        }
     }
 
     private void saveProposal(Proposal proposal) {
@@ -194,7 +198,7 @@ public class CreateProposalFragment extends Fragment {
 
     private void clearForm() {
         startLocationEdit.setText("");
-        destinationEdit.setText("");
+        endLocationEdit.setText("");
         carModelEdit.setText("");
         availableSeatsEdit.setText("");
     }
