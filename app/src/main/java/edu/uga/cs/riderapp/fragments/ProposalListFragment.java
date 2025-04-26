@@ -105,7 +105,9 @@ public class ProposalListFragment extends Fragment {
                     String type = proposalSnap.child("type").getValue(String.class);
                     String startLocation = proposalSnap.child("startLocation").getValue(String.class);
                     String endLocation = proposalSnap.child("endLocation").getValue(String.class);
-                    String userId = proposalSnap.child("userId").getValue(String.class);
+                    //String userId = proposalSnap.child("userId").getValue(String.class);
+                    String driverId = proposalSnap.child("driverId").getValue(String.class);
+                    String riderId = proposalSnap.child("riderId").getValue(String.class);
 
                     Proposal proposal = new Proposal();
                     proposal.setProposalId(proposalId);
@@ -119,9 +121,13 @@ public class ProposalListFragment extends Fragment {
                         Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
                         proposal.setCar(carModel);
                         proposal.setAvailableSeats(seats != null ? seats : 0);
+                        proposal.setDriverId(driverId);
+                    } else {
+                        proposal.setRiderId(riderId);
+
                     }
 
-                    fetchUserById(userId, proposal);
+                   // fetchUserById(userId, proposal);
                     proposals.add(proposal);
                 }
 
