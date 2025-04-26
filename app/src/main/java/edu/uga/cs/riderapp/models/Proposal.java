@@ -2,6 +2,7 @@ package edu.uga.cs.riderapp.models;
 
 import java.util.Date;
 
+
 public class Proposal {
     private String proposalId;
     private String type;
