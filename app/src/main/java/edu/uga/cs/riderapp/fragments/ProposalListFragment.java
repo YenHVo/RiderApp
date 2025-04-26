@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -76,7 +77,20 @@ public class ProposalListFragment extends Fragment {
         adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
             public void onAcceptClick(Proposal proposal) {
                 boolean isDriver = "request".equals(proposal.getType());
-                updateProposalConfirmation(proposal, isDriver);
+
+                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
+                        .getReference("proposals")
+                        .child(proposal.getProposalId());
+
+                if (isDriver) {
+                    proposalRef.child("driverStatus").setValue("accepted");
+                    proposalRef.child("driverId").setValue(currentUserId);
+                } else {
+                    proposalRef.child("riderStatus").setValue("accepted");
+                    proposalRef.child("riderId").setValue(currentUserId);
+                }
+
+                //updateProposalConfirmation(proposal, isDriver);
                 Intent intent = new Intent(getActivity(), LoadingActivity.class);
                 intent.putExtra("proposalId", proposal.getProposalId());
                 intent.putExtra("isDriver", isDriver);
@@ -109,25 +123,26 @@ public class ProposalListFragment extends Fragment {
                     String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                     String userId = proposalSnap.child("userId").getValue(String.class);
 
-
                     Proposal proposal = new Proposal();
                     proposal.setProposalId(proposalId);
                     proposal.setType(type);
                     proposal.setStartLocation(startLocation);
                     proposal.setEndLocation(endLocation);
 
-
                     if ("offer".equals(type)) {
                         String carModel = proposalSnap.child("carModel").getValue(String.class);
                         Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
                         proposal.setCar(carModel);
                         proposal.setAvailableSeats(seats != null ? seats : 0);
-
                     }
-                    fetchUserById(userId, proposal);
-                    proposals.add(proposal);
-                }
 
+                    // Only show proposals that are still pending
+                    if ("pending".equals(proposal.getDriverStatus()) &&
+                            "pending".equals(proposal.getRiderStatus())) {
+                        proposals.add(proposal);
+                        fetchUserById(userId, proposal);
+                    }
+                }
                 adapter.notifyDataSetChanged();
             }
 
@@ -170,19 +185,16 @@ public class ProposalListFragment extends Fragment {
         });
     }
 
+    /*
     private void updateProposalConfirmation(Proposal proposal, boolean isDriver) {
         DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
-
         if (isDriver) {
-            proposalRef.child("confirmedByDriver").setValue(true);
+            proposalRef.child("driverStatus").setValue("accepted");
         } else {
-            proposalRef.child("confirmedByRider").setValue(true);
+            proposalRef.child("riderStatus").setValue("accepted");
         }
-
-
         checkBothUsersConfirmed(proposal);
     }
-
 
     private void checkBothUsersConfirmed(Proposal proposal) {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
@@ -193,7 +205,6 @@ public class ProposalListFragment extends Fragment {
                 boolean driverConfirmed = snapshot.child("confirmedByDriver").getValue(Boolean.class);
                 boolean riderConfirmed = snapshot.child("confirmedByRider").getValue(Boolean.class);
 
-
                 if (driverConfirmed && riderConfirmed) {
                     proposalsRef.child("status").setValue("confirmed");
                     Toast.makeText(getContext(), "Proposal confirmed!", Toast.LENGTH_SHORT).show();
@@ -201,7 +212,6 @@ public class ProposalListFragment extends Fragment {
                     String riderId = proposal.getRiderId();
                     fetchUserDetailsAndStartActivity(driverId, riderId, proposal);
                 }
-
             }
 
             @Override
@@ -209,7 +219,8 @@ public class ProposalListFragment extends Fragment {
                 Log.e("ProposalListFragment", "Database error: " + error.getMessage());
             }
         });
-    }
+    }*/
+
     private void fetchUserDetailsAndStartActivity(String driverId, String riderId, Proposal proposal) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
         usersRef.child(driverId).addListenerForSingleValueEvent(new ValueEventListener() {

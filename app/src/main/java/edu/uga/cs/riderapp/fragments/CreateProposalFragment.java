@@ -190,6 +190,12 @@ public class CreateProposalFragment extends Fragment {
             return;
         }
 
+        if (isDriver) {
+            proposal.setDriverId(getCurrentUser().getUserId());
+        } else {
+            proposal.setRiderId(getCurrentUser().getUserId());
+        }
+
         proposalsRef.child(proposalId).setValue(proposal)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();

@@ -145,8 +145,13 @@ public class Proposal {
     public String getDriverStatus() {
         return driverStatus;
     }
-    public void setStatus(String status) {
-        this.status = status;
+
+    public void setRiderStatus(String riderStatus) {
+        this.riderStatus = riderStatus;
+    }
+
+    public void setDriverStatus(String driverStatus) {
+        this.driverStatus = driverStatus;
     }
 
     public Date getCreatedAt() {
@@ -180,4 +185,5 @@ public class Proposal {
     public void setConfirmedByRider(boolean confirmedByRider) {
         this.confirmedByRider = confirmedByRider;
     }
+
 }
