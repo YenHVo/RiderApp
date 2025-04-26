@@ -15,6 +15,9 @@
         android:theme="@style/Theme.RiderApp"
         tools:targetApi="31">
         <activity
+            android:name=".activities.LoadingActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.AuthActivity"
             android:exported="false" />
         <activity

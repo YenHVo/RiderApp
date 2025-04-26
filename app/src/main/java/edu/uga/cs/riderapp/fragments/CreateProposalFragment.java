@@ -192,7 +192,6 @@ public class CreateProposalFragment extends Fragment {
         }
     }
 
-
     private void clearForm() {
         startLocationEdit.setText("");
         destinationEdit.setText("");
