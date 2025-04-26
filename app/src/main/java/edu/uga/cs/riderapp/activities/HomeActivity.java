@@ -25,9 +25,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-
-
-
 public class HomeActivity extends AppCompatActivity {
 
     private TextView userNameTextView;
@@ -50,7 +47,6 @@ public class HomeActivity extends AppCompatActivity {
         pointsTextView = findViewById(R.id.pointsTextView);
         logoutButton = findViewById(R.id.logoutButton);
 
-        // todo: find a way to get the current user. maybe from the intent?
         getCurrentUserFromFirebase();
 
         if (savedInstanceState == null) {
@@ -76,7 +72,7 @@ public class HomeActivity extends AppCompatActivity {
         /*
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new PlacesFragment())
+                    .replace(R.id.fragmentContainer, new ProfileFragment())
                     .commit();
         });*/
 
@@ -119,8 +115,6 @@ public class HomeActivity extends AppCompatActivity {
             pointsTextView.setText(user.getPoints() + " points");
         }
     }
-
-    // todo: uncomment for firebase
 
     @Override
     protected void onStart() {
