@@ -11,7 +11,7 @@ public class Proposal {
     private String driverId;
     private String riderId;
     private String car;
-    private String status;
+
     private Date createdAt;
     private int availableSeats;
     private boolean confirmedByDriver;
@@ -25,12 +25,13 @@ public class Proposal {
 
     public Proposal() {
         this.createdAt = new Date();
-        this.status = "pending";
+        this.riderStatus = "pending";
+        this.driverStatus = "pending";
         this.confirmedByDriver = false;
         this.confirmedByRider = false;
     }
 
-    // For Drivers
+
     public Proposal(String type, String startLocation, String endLocation,
                     String driverId, String car, int availableSeats) {
         this.type = type;
@@ -39,10 +40,11 @@ public class Proposal {
         this.driverId = driverId;
         this.car = car;
         this.availableSeats = availableSeats;
-        this.status = "pending";
         this.createdAt = new Date();
         this.confirmedByDriver = false;
         this.confirmedByRider = false;
+        this.riderStatus = "pending";
+        this.driverStatus = "pending";
     }
 
     // For Riders
@@ -53,7 +55,8 @@ public class Proposal {
         this.endLocation = endLocation;
         this.riderId = riderId;
         this.car = null;
-        this.status = "pending";
+        this.riderStatus = "pending";
+        this.driverStatus = "pending";
         this.createdAt = new Date();
         this.confirmedByDriver = false;
         this.confirmedByRider = false;
@@ -133,10 +136,6 @@ public class Proposal {
 
     public void setCar(String car) {
         this.car = car;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     public String getRiderStatus() {
