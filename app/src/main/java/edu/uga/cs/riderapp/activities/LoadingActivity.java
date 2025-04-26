@@ -106,7 +106,7 @@ public class LoadingActivity extends AppCompatActivity {
     private void setupDatabaseListener() {
         proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
 
-        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        proposalRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
