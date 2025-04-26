@@ -19,6 +19,10 @@ public class Proposal {
     private String driverName;
     private String riderName;
 
+    private String riderStatus;
+
+    private String driverStatus;
+
     public Proposal() {
         this.createdAt = new Date();
         this.status = "pending";
@@ -135,6 +139,13 @@ public class Proposal {
         return status;
     }
 
+    public String getRiderStatus() {
+        return riderStatus;
+    }
+
+    public String getDriverStatus() {
+        return driverStatus;
+    }
     public void setStatus(String status) {
         this.status = status;
     }
