@@ -3,6 +3,7 @@ package edu.uga.cs.riderapp.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -70,19 +71,33 @@ public class LoginFragment extends Fragment {
                         if (firebaseUser != null) {
                             String uid = firebaseUser.getUid();
 
-                            // Fetch the user data from Realtime Database
+
                             databaseReference.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                                     User user = snapshot.getValue(User.class);
+
+
                                     if (user != null) {
-                                        Toast.makeText(getActivity(), "Welcome, " + user.getName(), Toast.LENGTH_SHORT).show();
-                                        startActivity(new Intent(getActivity(), HomeActivity.class));
-                                        getActivity().finish();
+
+                                        if (getActivity() != null) {
+                                            Log.d("LoginFragment", "Activity is not null, proceeding");
+                                            Toast.makeText(getActivity(), "Welcome, " + user.getName(), Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(getActivity(), HomeActivity.class));
+                                            getActivity().finish();
+                                        } else {
+                                            Log.e("LoginFragment", "getActivity() is null, cannot transition to HomeActivity");
+                                        }
+
                                     } else {
-                                        Toast.makeText(getActivity(), "User record not found in database", Toast.LENGTH_LONG).show();
+
+                                        if (getActivity() != null) {
+                                            Toast.makeText(getActivity(), "User record not found in database", Toast.LENGTH_LONG).show();
+                                        }
                                     }
                                 }
+
 
                                 @Override
                                 public void onCancelled(@NonNull DatabaseError error) {

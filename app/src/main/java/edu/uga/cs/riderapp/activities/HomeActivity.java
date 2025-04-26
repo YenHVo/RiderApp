@@ -2,6 +2,7 @@ package edu.uga.cs.riderapp.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +20,7 @@ import edu.uga.cs.riderapp.fragments.CreateProposalFragment;
 import edu.uga.cs.riderapp.fragments.ProposalListFragment;
 import edu.uga.cs.riderapp.models.User;
 
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -50,9 +52,13 @@ public class HomeActivity extends AppCompatActivity {
         getCurrentUserFromFirebase();
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new ProposalListFragment())
-                    .commit();
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProposalListFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
         }
 
 
@@ -88,33 +94,46 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void getCurrentUserFromFirebase() {
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String currentUserId = currentUser.getUid();
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
 
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    user = snapshot.getValue(User.class);
-                    updateUserInfo();
-                } else {
-                    Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        user = snapshot.getValue(User.class);
+                        updateUserInfo();
+                    } else {
+                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+
+            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
+
+            startActivity(new Intent(HomeActivity.this, MainActivity.class));
+            finish();
+        }
     }
+
 
     private void updateUserInfo() {
         if (user != null) {
             userNameTextView.setText("Welcome, " + user.getName() + "!");
             pointsTextView.setText(user.getPoints() + " points");
+        } else {
+            Toast.makeText(HomeActivity.this, "User info not available", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     protected void onStart() {
