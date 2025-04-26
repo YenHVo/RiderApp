@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.fragments.CreateProposalFragment;
+import edu.uga.cs.riderapp.fragments.ProfileFragment;
 import edu.uga.cs.riderapp.fragments.ProposalListFragment;
 import edu.uga.cs.riderapp.models.User;
 
@@ -62,12 +63,17 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         //todo: profile fragment?
-        /*
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new ProfileFragment())
-                    .commit();
-        });*/
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProfileFragment())
+                        .addToBackStack(null) // allows back button to return
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
 
         findViewById(R.id.createRideBtn).setOnClickListener(v -> {
             try {
