@@ -452,9 +452,15 @@ public class LoadingActivity extends AppCompatActivity {
             if (driverSnapshot.exists()) {
                 Long driverPoints = driverSnapshot.getValue(Long.class);
                 if (driverPoints == null) driverPoints = 0L;
-                driverRef.setValue(driverPoints + 100);
+                driverRef.setValue(driverPoints + 100).addOnSuccessListener(aVoid -> {
+                    Log.d("HomeActivity", "Driver points updated successfully");
+                }).addOnFailureListener(e -> {
+                    Log.e("HomeActivity", "Failed to update driver points: " + e.getMessage());
+                });
+            } else {
+                Log.e("HomeActivity", "Driver points not found");
             }
-        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to update driver points: " + e.getMessage()));
+        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch driver points: " + e.getMessage()));
 
         DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
         riderRef.get().addOnSuccessListener(riderSnapshot -> {
@@ -463,9 +469,15 @@ public class LoadingActivity extends AppCompatActivity {
                 if (riderPoints == null) riderPoints = 0L;
                 long updatedPoints = riderPoints - 100;
                 if (updatedPoints < 0) updatedPoints = 0;
-                riderRef.setValue(updatedPoints);
+                riderRef.setValue(updatedPoints).addOnSuccessListener(aVoid -> {
+                    Log.d("HomeActivity", "Rider points updated successfully");
+                }).addOnFailureListener(e -> {
+                    Log.e("HomeActivity", "Failed to update rider points: " + e.getMessage());
+                });
+            } else {
+                Log.e("HomeActivity", "Rider points not found");
             }
-        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to update rider points: " + e.getMessage()));
+        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch rider points: " + e.getMessage()));
     }
 
 
