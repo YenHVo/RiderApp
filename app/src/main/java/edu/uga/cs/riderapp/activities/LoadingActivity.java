@@ -206,18 +206,32 @@ public class LoadingActivity extends AppCompatActivity {
         returnHomeButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
 
-        String otherUserId = isDriver ? proposal.getRiderId() : proposal.getDriverId();
-        fetchUserDetails(otherUserId, proposal, details -> {
-            if (isDriver) {
-                driverAcceptedLayout.setVisibility(View.VISIBLE);
-                driverMatchDetails.setText(details);
-                driverButtonContainer.setVisibility(View.VISIBLE);
-            } else {
-                riderAcceptedLayout.setVisibility(View.VISIBLE);
-                riderMatchDetails.setText(details);
-                riderButtonContainer.setVisibility(View.VISIBLE);
-            }
-        });
+        String otherUserName = isDriver ? proposal.getRiderName() : proposal.getDriverName();
+
+        String details;
+        if (isDriver) {
+            // Display rider details
+            details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
+                    otherUserName != null ? otherUserName : "Rider",
+                    proposal.getStartLocation(),
+                    proposal.getEndLocation());
+
+            driverAcceptedLayout.setVisibility(View.VISIBLE);
+            driverMatchDetails.setText(details);
+            riderAcceptedLayout.setVisibility(View.GONE);
+        } else {
+            // Display driver details with car information
+            details = String.format("Driver: %s\nCar: %s\nAvailable Seats: %d\nPickup: %s\nDropoff: %s",
+                    otherUserName != null ? otherUserName : "Driver",
+                    proposal.getCar() != null ? proposal.getCar() : "Car not specified",
+                    proposal.getAvailableSeats(),
+                    proposal.getStartLocation(),
+                    proposal.getEndLocation());
+
+            riderAcceptedLayout.setVisibility(View.VISIBLE);
+            riderMatchDetails.setText(details);
+            driverAcceptedLayout.setVisibility(View.GONE);
+        }
     }
 
     private void showAcceptedScreen(Proposal proposal) {
@@ -252,7 +266,6 @@ public class LoadingActivity extends AppCompatActivity {
             riderMatchDetails.setText(details);
             driverAcceptedLayout.setVisibility(View.GONE);
         }
-
         returnHomeButton.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
@@ -342,51 +355,6 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-    /*
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    callback.onDetailsFetched("User not found");
-                    return;
-                }
-
-                User user = snapshot.getValue(User.class);
-                if (user == null) {
-                    callback.onDetailsFetched("User details error");
-                    return;
-                }
-
-                String carModel = snapshot.child("carModel").exists() ?
-                        snapshot.child("carModel").getValue(String.class) : "Not specified";
-                String userName = user.getName() != null ? user.getName() : "Unknown";
-
-                String details;
-                if (isDriver) {
-                    details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
-                            userName,
-                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
-                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
-                } else {
-                    details = String.format("Driver: %s\nCar: %s\nPickup: %s\nDropoff: %s",
-                            userName,
-                            carModel,
-                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
-                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
-                }
-
-                callback.onDetailsFetched(details);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                callback.onDetailsFetched("Error loading details");
-                Log.e("LoadingActivity", "Database error: " + error.getMessage());
-            }
-        });
-    }*/
-
     interface UserDetailsCallback {
         void onDetailsFetched(String details);
     }
@@ -420,61 +388,6 @@ public class LoadingActivity extends AppCompatActivity {
                     navigateToHome();
                 });
     }
-
-    /*
-    private void proposalAccepted(Proposal proposal) {
-        progressBar.setVisibility(View.GONE);
-        loadingText.setVisibility(View.GONE);
-        subText.setVisibility(View.GONE);
-
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-
-        if (isDriver) {
-            driverAcceptedLayout.setVisibility(View.VISIBLE);
-
-
-            usersRef.child(proposal.getRiderId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    String riderName = snapshot.child("name").getValue(String.class);
-
-                    driverMatchDetails.setText(String.format(
-                            "Rider: %s\nPickup: %s\nDropoff: %s",
-                            riderName != null ? riderName : "Unknown",
-                            proposal.getStartLocation(),
-                            proposal.getEndLocation()
-                    ));
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) { }
-            });
-
-        } else {
-            riderAcceptedLayout.setVisibility(View.VISIBLE);
-
-
-            usersRef.child(proposal.getDriverId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    String driverName = snapshot.child("name").getValue(String.class);
-                    String carModel = snapshot.child("carModel").getValue(String.class); // optional if you want car
-
-                    riderMatchDetails.setText(String.format(
-                            "Driver: %s\nCar: %s\nPickup: %s\nDropoff: %s",
-                            driverName != null ? driverName : "Unknown",
-                            carModel != null ? carModel : "Unknown",
-                            proposal.getStartLocation(),
-                            proposal.getEndLocation()
-                    ));
-                }
-                @Override
-                public void onCancelled(DatabaseError error) { }
-            });
-        }
-        cancelButton.setVisibility(View.GONE);
-        dualButtonContainer.setVisibility(View.VISIBLE);
-    }*/
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
@@ -525,30 +438,6 @@ public class LoadingActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> Toast.makeText(LoadingActivity.this, "Failed to cancel proposal", Toast.LENGTH_SHORT).show());
         }
     }
-
-    /*
-    @Override
-    public void onBackPressed() {
-        resetToWaitingState();
-        Log.d("LoadingActivity", "Back button pressed, UI reset to waiting state.");
-        super.onBackPressed();
-    }*/
-
-    /*
-    private void resetToWaitingState() {
-        progressBar.setVisibility(View.VISIBLE);
-        loadingText.setVisibility(View.VISIBLE);
-        loadingText.setText("Waiting for a match...");
-        subText.setVisibility(View.VISIBLE);
-
-        driverAcceptedLayout.setVisibility(View.GONE);
-        riderAcceptedLayout.setVisibility(View.GONE);
-        driverButtonContainer.setVisibility(View.GONE);
-        riderButtonContainer.setVisibility(View.GONE);
-
-        cancelButton.setVisibility(View.VISIBLE);
-        dualButtonContainer.setVisibility(View.GONE);
-    }*/
 
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
