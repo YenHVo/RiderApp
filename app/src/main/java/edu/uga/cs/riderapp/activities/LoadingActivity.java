@@ -219,6 +219,8 @@ public class LoadingActivity extends AppCompatActivity {
             driverAcceptedLayout.setVisibility(View.VISIBLE);
             driverMatchDetails.setText(details);
             riderAcceptedLayout.setVisibility(View.GONE);
+            driverButtonContainer.setVisibility(View.VISIBLE);
+            riderButtonContainer.setVisibility(View.GONE);
         } else {
             // Display driver details with car information
             details = String.format("Driver: %s\nCar: %s\nAvailable Seats: %d\nPickup: %s\nDropoff: %s",
@@ -231,6 +233,8 @@ public class LoadingActivity extends AppCompatActivity {
             riderAcceptedLayout.setVisibility(View.VISIBLE);
             riderMatchDetails.setText(details);
             driverAcceptedLayout.setVisibility(View.GONE);
+            driverButtonContainer.setVisibility(View.GONE);
+            riderButtonContainer.setVisibility(View.VISIBLE);
         }
     }
 
@@ -267,8 +271,6 @@ public class LoadingActivity extends AppCompatActivity {
             driverAcceptedLayout.setVisibility(View.GONE);
         }
         returnHomeButton.setVisibility(View.GONE);
-        driverButtonContainer.setVisibility(View.GONE);
-        riderButtonContainer.setVisibility(View.GONE);
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.VISIBLE);
     }
