@@ -256,9 +256,9 @@ public class LoadingActivity extends AppCompatActivity {
 
 
         completedLayout.setVisibility(View.VISIBLE);
-        TextView completedDetails = findViewById(R.id.completedDetails);
         completeBackButton.setVisibility(View.VISIBLE);
-
+        TextView completedDetails = findViewById(R.id.completedDetails);
+        completedDetails.setText("You have successfully completed the ride!");
         Log.d("CompletedScreen", "Completed screen visible");
 
     }
