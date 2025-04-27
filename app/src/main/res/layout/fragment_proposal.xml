@@ -76,6 +76,37 @@
             tools:text="Description"/>
 
         <LinearLayout
+            android:id="@+id/carDetailsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enter your car details:"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/carModelInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Car Model"
+                android:inputType="text"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/carSeatsInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Available Seats"
+                android:inputType="number"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/actionButtonsLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

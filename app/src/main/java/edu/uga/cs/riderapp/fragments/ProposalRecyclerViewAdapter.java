@@ -5,8 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.databinding.FragmentProposalBinding;
@@ -48,16 +50,46 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
         holder.itemView.setOnClickListener(v -> {
             boolean isVisible = holder.actionButtonsLayout.getVisibility() == View.VISIBLE;
             holder.actionButtonsLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+
+            // Show car details only for requests
+            if ("request".equals(proposal.getType())) {
+                holder.carDetailsContainer.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+            } else {
+                holder.carDetailsContainer.setVisibility(View.GONE);
+            }
+
         });
 
-        // Handle button clicks
         holder.acceptButton.setOnClickListener(v -> {
+            // Get car details if this is a request
+            if ("request".equals(proposal.getType())) {
+                String carModel = holder.carModelInput.getText().toString();
+                String seatsStr = holder.carSeatsInput.getText().toString();
+
+                if (carModel.isEmpty() || seatsStr.isEmpty()) {
+                    Toast.makeText(holder.itemView.getContext(),
+                            "Please enter car details", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Store these values in the proposal if needed
+                proposal.setCar(carModel);
+                try {
+                    proposal.setAvailableSeats(Integer.parseInt(seatsStr));
+                } catch (NumberFormatException e) {
+                    proposal.setAvailableSeats(0);
+                }
+            }
+
             listener.onAcceptClick(proposal);
             holder.actionButtonsLayout.setVisibility(View.GONE);
+            holder.carDetailsContainer.setVisibility(View.GONE);
         });
 
-        holder.cancelButton.setOnClickListener(v ->
-                listener.onCancelClick(proposal, holder.actionButtonsLayout));
+        holder.cancelButton.setOnClickListener(v -> {
+                listener.onCancelClick(proposal, holder.actionButtonsLayout);
+                holder.carDetailsContainer.setVisibility(View.GONE);
+        });
     }
 
     @Override
@@ -71,6 +103,9 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
         public final LinearLayout actionButtonsLayout;
         public final Button acceptButton;
         public final Button cancelButton;
+        public final LinearLayout carDetailsContainer;
+        public final EditText carModelInput;
+        public final EditText carSeatsInput;
 
         public ViewHolder(FragmentProposalBinding binding) {
             super(binding.getRoot());
@@ -78,6 +113,9 @@ public class ProposalRecyclerViewAdapter extends RecyclerView.Adapter<ProposalRe
             actionButtonsLayout = binding.actionButtonsLayout;
             acceptButton = binding.acceptButton;
             cancelButton = binding.cancelButton;
+            carDetailsContainer = binding.carDetailsContainer;
+            carModelInput = binding.carModelInput;
+            carSeatsInput = binding.carSeatsInput;
         }
 
         public void bind(Proposal proposal) {
