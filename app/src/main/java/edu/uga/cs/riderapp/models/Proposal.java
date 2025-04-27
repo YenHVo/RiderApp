@@ -170,19 +170,19 @@ public class Proposal {
         this.availableSeats = availableSeats;
     }
 
-    public boolean isConfirmedByDriver() {
+    public Boolean getConfirmedByDriver() {
         return confirmedByDriver;
     }
 
-    public void setConfirmedByDriver(boolean confirmedByDriver) {
+    public void setConfirmedByDriver(Boolean confirmedByDriver) {
         this.confirmedByDriver = confirmedByDriver;
     }
 
-    public boolean isConfirmedByRider() {
+    public Boolean getConfirmedByRider() {
         return confirmedByRider;
     }
 
-    public void setConfirmedByRider(boolean confirmedByRider) {
+    public void setConfirmedByRider(Boolean confirmedByRider) {
         this.confirmedByRider = confirmedByRider;
     }
 

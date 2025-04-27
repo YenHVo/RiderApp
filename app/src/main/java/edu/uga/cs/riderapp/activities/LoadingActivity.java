@@ -144,7 +144,10 @@ public class LoadingActivity extends AppCompatActivity {
                             showAcceptedScreen(proposal);
                         }
                         // 5. Ride completed
-                        else if ("completed".equals(driverStatus) || "completed".equals(riderStatus)) {
+                        else if (Boolean.TRUE.equals(proposal.getConfirmedByDriver()) && Boolean.TRUE.equals(proposal.getConfirmedByRider())) {
+                            proposalRef.child("status").setValue("completed");
+                            showCompletedScreen();
+                        } else if ("completed".equals(driverStatus) || "completed".equals(riderStatus)) {
                             showCompletedScreen();
                         }
                     }
@@ -257,9 +260,12 @@ public class LoadingActivity extends AppCompatActivity {
 
         completedLayout.setVisibility(View.VISIBLE);
         completeBackButton.setVisibility(View.VISIBLE);
+        Log.d("CompletedScreen", "Completed screen visible");
+        completedLayout.requestLayout();
+        completeBackButton.requestLayout();
         TextView completedDetails = findViewById(R.id.completedDetails);
         completedDetails.setText("You have successfully completed the ride!");
-        Log.d("CompletedScreen", "Completed screen visible");
+
 
     }
 
