@@ -9,7 +9,7 @@ public class User {
     private String name;
     //private boolean isRider;
     //private boolean isDriver;
-    private int points;
+    private long points;
     private Date createdAt;
 
     public User() {
@@ -28,7 +28,7 @@ public class User {
         this.createdAt = new Date();
     }
 
-    public User(String userId, String email, String name, int points, Date createdAt) {
+    public User(String userId, String email, String name, long points, Date createdAt) {
         this.userId = userId;
         this.email = email;
         this.name = name;
@@ -80,11 +80,11 @@ public class User {
         isDriver = driver;
     }*/
 
-    public int getPoints() {
+    public long getPoints() {
         return points;
     }
 
-    public void setPoints(int points) {
+    public void setPoints(long points) {
         this.points = points;
     }
 
