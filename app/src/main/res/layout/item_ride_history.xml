@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:padding="16dp">
 
-    <!-- Date -->
+    <!-- Date TextView -->
     <TextView
         android:id="@+id/textViewDate"
         android:layout_width="wrap_content"
@@ -15,20 +15,22 @@
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="4dp"/>
 
-    <!-- Role -->
+    <!-- Role TextView -->
     <TextView
         android:id="@+id/textViewRole"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Driver"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:textColor="@android:color/darker_gray"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/textViewDate"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="8dp"/>
 
-    <!-- Start Location -->
+    <!-- Start Location TextView -->
     <TextView
         android:id="@+id/textViewStartLocation"
         android:layout_width="0dp"
@@ -41,7 +43,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>
 
-    <!-- End Location -->
+    <!-- End Location TextView -->
     <TextView
         android:id="@+id/textViewEndLocation"
         android:layout_width="0dp"
@@ -54,3 +56,4 @@
         android:layout_marginTop="4dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

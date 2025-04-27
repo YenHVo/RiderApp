@@ -26,12 +26,13 @@ import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView userNameTextView;
+
     private RecyclerView recyclerView;
     private RideHistoryAdapter adapter;
     private List<RideHistory> rideHistoryList;
     private FirebaseAuth auth;
     private DatabaseReference databaseReference;
+    private TextView noHistoryTextView;
 
     @Nullable
     @Override
@@ -47,6 +48,8 @@ public class ProfileFragment extends Fragment {
         adapter = new RideHistoryAdapter(rideHistoryList);
         recyclerView.setAdapter(adapter);
 
+        noHistoryTextView = view.findViewById(R.id.textViewNoHistory);
+
         auth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("ride_history");
 
@@ -60,23 +63,28 @@ public class ProfileFragment extends Fragment {
 
         String userId = user.getUid();
 
+
+        rideHistoryList.clear();
+
+
         databaseReference.orderByChild("driverId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        rideHistoryList.clear();
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
                             RideHistory ride = rideSnapshot.getValue(RideHistory.class);
-                            if (ride != null) {
+                            if (ride != null && "completed".equals(ride.getStatus())) {
                                 rideHistoryList.add(ride);
                             }
                         }
+                        checkIfHistoryIsEmpty();
                         adapter.notifyDataSetChanged();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {}
                 });
+
 
         databaseReference.orderByChild("riderId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -84,15 +92,27 @@ public class ProfileFragment extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
                             RideHistory ride = rideSnapshot.getValue(RideHistory.class);
-                            if (ride != null) {
-                                rideHistoryList.add(ride);
+                            if (ride != null && "completed".equals(ride.getStatus())) {
+
+                                if (!rideHistoryList.contains(ride)) {
+                                    rideHistoryList.add(ride);
+                                }
                             }
                         }
+                        checkIfHistoryIsEmpty();
                         adapter.notifyDataSetChanged();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {}
                 });
+    }
+
+    private void checkIfHistoryIsEmpty() {
+        if (rideHistoryList.isEmpty()) {
+            noHistoryTextView.setVisibility(View.VISIBLE);
+        } else {
+            noHistoryTextView.setVisibility(View.GONE);
+        }
     }
 }

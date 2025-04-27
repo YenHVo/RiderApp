@@ -89,7 +89,7 @@ public class ProposalListFragment extends Fragment {
                     proposalRef.child("riderStatus").setValue("accepted");
                     proposalRef.child("riderId").setValue(currentUserId);
                 }
-
+                checkBothUsersConfirmed(proposal);
                 //updateProposalConfirmation(proposal, isDriver);
                 Intent intent = new Intent(getActivity(), LoadingActivity.class);
                 intent.putExtra("proposalId", proposal.getProposalId());
@@ -107,6 +107,35 @@ public class ProposalListFragment extends Fragment {
 
         return view;
     }
+
+    private void checkBothUsersConfirmed(Proposal proposal) {
+        DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
+
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String driverStatus = snapshot.child("driverStatus").getValue(String.class);
+                String riderStatus = snapshot.child("riderStatus").getValue(String.class);
+
+                // If both driver and rider have accepted, update the status to 'confirmed'
+                if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
+                    proposalRef.child("status").setValue("confirmed");
+
+                    // Remove the proposal from the database (or add it to a history list)
+                    proposalRef.removeValue();
+
+                    // Optionally, you can update the UI or notify the user
+                    Toast.makeText(getContext(), "Proposal confirmed!", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("ProposalListFragment", "Database error: " + error.getMessage());
+            }
+        });
+    }
+
 
     private void loadProposalsFromFirebase() {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
@@ -255,6 +284,4 @@ public class ProposalListFragment extends Fragment {
     }
 
 }
-
-
 

@@ -416,38 +416,6 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-    /*
-    private void acceptProposal() {
-        if (proposalRef != null) {
-            proposalRef.child("status").setValue("accepted")
-                    .addOnSuccessListener(aVoid -> {
-                        // Hide accept/reject buttons and show the dual buttons at bottom
-                        if (isDriver) {
-                            driverButtonContainer.setVisibility(View.GONE);
-                        } else {
-                            riderButtonContainer.setVisibility(View.GONE);
-                        }
-                        dualButtonContainer.setVisibility(View.VISIBLE);
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(LoadingActivity.this, "Failed to accept proposal", Toast.LENGTH_SHORT).show();
-                    });
-        }
-    }
-
-    private void rejectProposal() {
-        if (proposalRef != null) {
-            proposalRef.child("status").setValue("pending")
-                    .addOnSuccessListener(aVoid -> {
-                        // Reset to waiting state
-                        resetToWaitingState();
-                        Toast.makeText(LoadingActivity.this, "Proposal rejected", Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(LoadingActivity.this, "Failed to reject proposal", Toast.LENGTH_SHORT).show();
-                    });
-        }
-    }*/
 
     private void resetToWaitingState() {
         progressBar.setVisibility(View.VISIBLE);
