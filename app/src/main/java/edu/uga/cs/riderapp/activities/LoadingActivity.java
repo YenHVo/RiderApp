@@ -287,6 +287,60 @@ public class LoadingActivity extends AppCompatActivity {
                     return;
                 }
 
+                String carModel = currentProposal.getCar(); // Get car from proposal first
+                if (carModel == null || carModel.isEmpty()) {
+                    // Fall back to user's car model if not in proposal
+                    carModel = snapshot.child("carModel").exists() ?
+                            snapshot.child("carModel").getValue(String.class) : "Not specified";
+                }
+
+                String userName = user.getName() != null ? user.getName() : "Unknown";
+                String seats = currentProposal.getAvailableSeats() > 0 ?
+                        String.valueOf(currentProposal.getAvailableSeats()) : "Not specified";
+
+                String details;
+                if (isDriver) {
+                    // Rider details
+                    details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
+                            userName,
+                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
+                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
+                } else {
+                    // Driver details - include car info
+                    details = String.format("Driver: %s\nCar: %s\nSeats: %s\nPickup: %s\nDropoff: %s",
+                            userName,
+                            carModel,
+                            seats,
+                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
+                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
+                }
+
+                callback.onDetailsFetched(details);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                callback.onDetailsFetched("Error loading details");
+                Log.e("LoadingActivity", "Database error: " + error.getMessage());
+            }
+        });
+    }
+    /*
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    callback.onDetailsFetched("User not found");
+                    return;
+                }
+
+                User user = snapshot.getValue(User.class);
+                if (user == null) {
+                    callback.onDetailsFetched("User details error");
+                    return;
+                }
+
                 String carModel = snapshot.child("carModel").exists() ?
                         snapshot.child("carModel").getValue(String.class) : "Not specified";
                 String userName = user.getName() != null ? user.getName() : "Unknown";
@@ -314,7 +368,7 @@ public class LoadingActivity extends AppCompatActivity {
                 Log.e("LoadingActivity", "Database error: " + error.getMessage());
             }
         });
-    }
+    }*/
 
     interface UserDetailsCallback {
         void onDetailsFetched(String details);
