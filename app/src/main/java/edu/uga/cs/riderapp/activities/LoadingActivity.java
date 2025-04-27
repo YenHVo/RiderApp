@@ -260,9 +260,9 @@ public class LoadingActivity extends AppCompatActivity {
         returnHomeButton.setVisibility(View.VISIBLE);
 
         if (isDriver) {
-            loadingText.setText("Thank you for your service.");
+            subText.setText("Thank you for your service. Your points will be adjusted accordingly.");
         } else {
-            loadingText.setText("Thank you for your request.");
+            subText.setText("Thank you for your request. Your points will be adjusted accordingly.");
         }
     }
 
