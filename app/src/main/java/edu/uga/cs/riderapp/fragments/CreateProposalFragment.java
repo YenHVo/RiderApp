@@ -29,6 +29,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Date;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -143,7 +145,6 @@ public class CreateProposalFragment extends Fragment {
                         return;
                     }
 
-
                     Proposal proposal = new Proposal(
                             "request",
                             startLocation,
@@ -196,15 +197,21 @@ public class CreateProposalFragment extends Fragment {
         }
     }
 
-
-
     private User getCurrentUser() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser != null) {
-            return new User(firebaseUser.getEmail(), firebaseUser.getDisplayName());
-        } else {
-            return null;
+            return new User(
+                    firebaseUser.getUid(),
+                    firebaseUser.getEmail(),
+                    firebaseUser.getDisplayName() != null ?
+                            firebaseUser.getDisplayName() :
+                            firebaseUser.getEmail() != null ?
+                                    firebaseUser.getEmail().split("@")[0] : "User",
+                    0,
+                    new Date()
+            );
         }
+        return null;
     }
 
     private void saveProposal(Proposal proposal, boolean isDriver) {
@@ -216,17 +223,20 @@ public class CreateProposalFragment extends Fragment {
             return;
         }
 
+        User currentUser = getCurrentUser();
         if (isDriver) {
-            proposal.setDriverId(getCurrentUser().getUserId());
+            proposal.setDriverId(currentUser.getUserId());
+            proposal.setDriverName(currentUser.getName());  // Add this line
         } else {
-            proposal.setRiderId(getCurrentUser().getUserId());
+            proposal.setRiderId(currentUser.getUserId());
+            proposal.setRiderName(currentUser.getName());  // Add this line
         }
 
+        proposal.setProposalId(proposalId);
         proposalsRef.child(proposalId).setValue(proposal)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();
                     clearForm();
-
 
                     Intent intent = new Intent(getActivity(), LoadingActivity.class);
                     intent.putExtra("proposalId", proposalId);

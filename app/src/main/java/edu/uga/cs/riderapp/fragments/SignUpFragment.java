@@ -93,7 +93,7 @@ public class SignUpFragment extends Fragment {
                         if (firebaseUser != null) {
                             String userId = firebaseUser.getUid();
 
-                            User newUser = new User(userId, email, name, true, true, 0, new Date());
+                            User newUser = new User(userId, email, name, 0, new Date());
 
                             databaseRef.child(userId).setValue(newUser)
                                     .addOnSuccessListener(aVoid -> {

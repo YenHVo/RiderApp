@@ -215,42 +215,6 @@ public class ProposalListFragment extends Fragment {
         });
     }
 
-    /*
-    private void updateProposalConfirmation(Proposal proposal, boolean isDriver) {
-        DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
-        if (isDriver) {
-            proposalRef.child("driverStatus").setValue("accepted");
-        } else {
-            proposalRef.child("riderStatus").setValue("accepted");
-        }
-        checkBothUsersConfirmed(proposal);
-    }
-
-    private void checkBothUsersConfirmed(Proposal proposal) {
-        DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
-
-        proposalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                boolean driverConfirmed = snapshot.child("confirmedByDriver").getValue(Boolean.class);
-                boolean riderConfirmed = snapshot.child("confirmedByRider").getValue(Boolean.class);
-
-                if (driverConfirmed && riderConfirmed) {
-                    proposalsRef.child("status").setValue("confirmed");
-                    Toast.makeText(getContext(), "Proposal confirmed!", Toast.LENGTH_SHORT).show();
-                    String driverId = proposal.getDriverId();
-                    String riderId = proposal.getRiderId();
-                    fetchUserDetailsAndStartActivity(driverId, riderId, proposal);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e("ProposalListFragment", "Database error: " + error.getMessage());
-            }
-        });
-    }*/
-
     private void fetchUserDetailsAndStartActivity(String driverId, String riderId, Proposal proposal) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
         usersRef.child(driverId).addListenerForSingleValueEvent(new ValueEventListener() {
