@@ -158,7 +158,9 @@ public class CreateProposalFragment extends Fragment {
 
                 @Override
                 public void onCancelled(DatabaseError error) {
-                    Toast.makeText(getContext(), "Failed to load points", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Failed to load points", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         } else {
