@@ -226,16 +226,32 @@ public class LoadingActivity extends AppCompatActivity {
         subText.setVisibility(View.GONE);
         backButton.setVisibility(View.GONE);
 
-        String otherUserId = isDriver ? proposal.getRiderId() : proposal.getDriverId();
-        fetchUserDetails(otherUserId, proposal, details -> {
-            if (isDriver) {
-                driverAcceptedLayout.setVisibility(View.VISIBLE);
-                driverMatchDetails.setText(details);
-            } else {
-                riderAcceptedLayout.setVisibility(View.VISIBLE);
-                riderMatchDetails.setText(details);
-            }
-        });
+        String otherUserName = isDriver ? proposal.getRiderName() : proposal.getDriverName();
+
+        String details;
+        if (isDriver) {
+            // Display rider details
+            details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
+                    otherUserName != null ? otherUserName : "Rider",
+                    proposal.getStartLocation(),
+                    proposal.getEndLocation());
+
+            driverAcceptedLayout.setVisibility(View.VISIBLE);
+            driverMatchDetails.setText(details);
+            riderAcceptedLayout.setVisibility(View.GONE);
+        } else {
+            // Display driver details with car information
+            details = String.format("Driver: %s\nCar: %s\nAvailable Seats: %d\nPickup: %s\nDropoff: %s",
+                    otherUserName != null ? otherUserName : "Driver",
+                    proposal.getCar() != null ? proposal.getCar() : "Car not specified",
+                    proposal.getAvailableSeats(),
+                    proposal.getStartLocation(),
+                    proposal.getEndLocation());
+
+            riderAcceptedLayout.setVisibility(View.VISIBLE);
+            riderMatchDetails.setText(details);
+            driverAcceptedLayout.setVisibility(View.GONE);
+        }
 
         returnHomeButton.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
@@ -325,6 +341,7 @@ public class LoadingActivity extends AppCompatActivity {
             }
         });
     }
+
     /*
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
