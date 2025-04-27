@@ -28,6 +28,7 @@ import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
 
+
 public class LoadingActivity extends AppCompatActivity {
 
     private String proposalId;
@@ -44,6 +45,10 @@ public class LoadingActivity extends AppCompatActivity {
     private Button cancelButton;
     private LinearLayout dualButtonContainer;
     private Button backButton, completeButton;
+    private LinearLayout completedLayout;
+    private TextView completedDetails;
+    private Button completeBackButton;
+
 
     private DatabaseReference proposalRef;
 
@@ -57,6 +62,8 @@ public class LoadingActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+
 
         proposalId = getIntent().getStringExtra("proposalId");
         isDriver = getIntent().getBooleanExtra("isDriver", false);
@@ -91,6 +98,9 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton = findViewById(R.id.driverRejectButton);
         riderAcceptButton = findViewById(R.id.riderAcceptButton);
         riderRejectButton = findViewById(R.id.riderRejectButton);
+        completedLayout = findViewById(R.id.completedLayout);
+        completeBackButton = findViewById(R.id.completeBackButton);
+        completedDetails = findViewById(R.id.completedDetails);
     }
 
     private void setupButtonListeners() {
@@ -101,6 +111,7 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton.setOnClickListener(v -> rejectProposal());
         riderAcceptButton.setOnClickListener(v -> acceptProposal());
         riderRejectButton.setOnClickListener(v -> rejectProposal());
+        completeBackButton.setOnClickListener(v -> navigateToHome());
     }
 
     private void setupDatabaseListener() {
@@ -232,10 +243,26 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
     private void showCompletedScreen() {
-        // todo: for later, make completed screen
-        Toast.makeText(this, "Ride completed!", Toast.LENGTH_SHORT).show();
-        navigateToHome();
+
+        progressBar.setVisibility(View.GONE);
+        loadingText.setVisibility(View.GONE);
+        subText.setVisibility(View.GONE);
+        driverAcceptedLayout.setVisibility(View.GONE);
+        riderAcceptedLayout.setVisibility(View.GONE);
+        driverButtonContainer.setVisibility(View.GONE);
+        riderButtonContainer.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.GONE);
+        dualButtonContainer.setVisibility(View.GONE);
+
+
+        completedLayout.setVisibility(View.VISIBLE);
+        TextView completedDetails = findViewById(R.id.completedDetails);
+        completeBackButton.setVisibility(View.VISIBLE);
+
+        Log.d("CompletedScreen", "Completed screen visible");
+
     }
+
 
     private void fetchUserDetails(String userId, Proposal currentProposal, UserDetailsCallback callback) {
         if (userId == null || currentProposal == null) {
@@ -392,7 +419,7 @@ public class LoadingActivity extends AppCompatActivity {
                     proposalRef.child("status").setValue("completed");
 
                     Toast.makeText(LoadingActivity.this, "Ride completed!", Toast.LENGTH_SHORT).show();
-                    navigateToHome();
+                    showCompletedScreen();
                 } else {
                     Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                 }
