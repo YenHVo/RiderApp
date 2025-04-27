@@ -197,12 +197,21 @@ public class ProposalListFragment extends Fragment {
                         proposal.setCar(carModel);
                         proposal.setAvailableSeats(seats != null ? seats : 0);
                     }
+                    String driverStatus = proposalSnap.child("driverStatus").getValue(String.class);
+                    String riderStatus = proposalSnap.child("riderStatus").getValue(String.class);
 
-                    // Only show proposals that are still pending
+                    proposal.setDriverStatus(driverStatus != null ? driverStatus : "pending");
+                    proposal.setRiderStatus(riderStatus != null ? riderStatus : "pending");
+
                     if ("pending".equals(proposal.getDriverStatus()) &&
                             "pending".equals(proposal.getRiderStatus())) {
                         proposals.add(proposal);
-                        fetchUserById(userId, proposal);
+                        if (userId != null && !userId.isEmpty()) {
+                            fetchUserById(userId, proposal);
+                        } else {
+                            Log.e("ProposalListFragment", "Proposal missing userId: " + proposal.getProposalId());
+                        }
+
                     }
                 }
                 adapter.notifyDataSetChanged();
