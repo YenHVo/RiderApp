@@ -60,7 +60,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Ride Matched!"
+                android:text="Ride Completed!"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"

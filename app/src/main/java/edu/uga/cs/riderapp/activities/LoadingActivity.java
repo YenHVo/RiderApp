@@ -95,6 +95,16 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton = findViewById(R.id.driverRejectButton);
         riderAcceptButton = findViewById(R.id.riderAcceptButton);
         riderRejectButton = findViewById(R.id.riderRejectButton);
+        isDriver = getIntent().getBooleanExtra("isDriver", false);
+        backButton.setVisibility(View.GONE);
+
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetToWaitingState();
+                Log.d("BackButton", "Back button clicked, UI reset to waiting state.");
+            }
+        });
 
     }
 
@@ -106,6 +116,7 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton.setOnClickListener(v -> rejectProposal());
         riderAcceptButton.setOnClickListener(v -> acceptProposal());
         riderRejectButton.setOnClickListener(v -> rejectProposal());
+
 
     }
 
@@ -250,10 +261,10 @@ public class LoadingActivity extends AppCompatActivity {
         dualButtonContainer.setVisibility(View.GONE);
         if (isDriver) {
             driverAcceptedLayout.setVisibility(View.VISIBLE);
-            driverMatchDetails.setText("Ride Completed! Thank you for your service.");
+            driverMatchDetails.setText("Ride Completed!\nThank you for your service.");
         } else {
             riderAcceptedLayout.setVisibility(View.VISIBLE);
-            riderMatchDetails.setText("Ride Completed! Thank you for your request.");
+            riderMatchDetails.setText("Ride Completed!\nThank you for your request.");
         }
 
 
@@ -446,7 +457,12 @@ public class LoadingActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> Toast.makeText(LoadingActivity.this, "Failed to cancel proposal", Toast.LENGTH_SHORT).show());
         }
     }
-
+    @Override
+    public void onBackPressed() {
+        resetToWaitingState();
+        Log.d("LoadingActivity", "Back button pressed, UI reset to waiting state.");
+        super.onBackPressed();
+    }
 
     private void resetToWaitingState() {
         progressBar.setVisibility(View.VISIBLE);
