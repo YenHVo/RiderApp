@@ -109,7 +109,7 @@ public class CreateProposalFragment extends Fragment {
             }
         });
 
-        // Submit button click handler
+
         submitButton.setOnClickListener(v -> createProposal());
         return view;
     }
@@ -132,7 +132,6 @@ public class CreateProposalFragment extends Fragment {
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
         if (!isOffer) {
-
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUserId()).child("points");
 
             userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -140,9 +139,8 @@ public class CreateProposalFragment extends Fragment {
                 public void onDataChange(DataSnapshot snapshot) {
                     Long points = snapshot.getValue(Long.class);
                     if (points == null || points < 100) {
-                        // Not enough points to request a ride
                         Toast.makeText(getContext(), "Not enough points. Give a ride to get more.", Toast.LENGTH_SHORT).show();
-                        return;  // Don't proceed with creating the request
+                        return;
                     }
 
 
@@ -163,7 +161,7 @@ public class CreateProposalFragment extends Fragment {
                 }
             });
         } else {
-
+            // Handling ride offer creation
             String carModel = carModelEdit.getText().toString().trim();
             String seatsStr = availableSeatsEdit.getText().toString().trim();
 
@@ -183,6 +181,7 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
+            // Proceed with creating the ride offer
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
@@ -196,6 +195,7 @@ public class CreateProposalFragment extends Fragment {
             clearForm();
         }
     }
+
 
 
     private User getCurrentUser() {
