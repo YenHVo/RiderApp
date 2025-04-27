@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.activities.HomeActivity;
 import edu.uga.cs.riderapp.activities.LoadingActivity;
 import edu.uga.cs.riderapp.fragments.placeholder.PlaceholderContent;
 import edu.uga.cs.riderapp.models.Proposal;
@@ -117,6 +118,7 @@ public class ProposalListFragment extends Fragment {
                 String driverStatus = snapshot.child("driverStatus").getValue(String.class);
                 String riderStatus = snapshot.child("riderStatus").getValue(String.class);
 
+
                 // If both driver and rider have accepted, update the status to 'confirmed'
                 if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
                     proposalRef.child("status").setValue("confirmed");
@@ -124,7 +126,6 @@ public class ProposalListFragment extends Fragment {
                     // Remove the proposal from the database (or add it to a history list)
                     proposalRef.removeValue();
 
-                    // Optionally, you can update the UI or notify the user
                     Toast.makeText(getContext(), "Proposal confirmed!", Toast.LENGTH_SHORT).show();
                 }
             }

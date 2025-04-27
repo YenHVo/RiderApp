@@ -23,8 +23,11 @@ import edu.uga.cs.riderapp.models.User;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 /**
@@ -128,8 +131,39 @@ public class CreateProposalFragment extends Fragment {
 
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
-        if (isOffer) {
-            // Validate offer fields
+        if (!isOffer) {
+
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUserId()).child("points");
+
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    Long points = snapshot.getValue(Long.class);
+                    if (points == null || points < 100) {
+                        // Not enough points to request a ride
+                        Toast.makeText(getContext(), "Not enough points. Give a ride to get more.", Toast.LENGTH_SHORT).show();
+                        return;  // Don't proceed with creating the request
+                    }
+
+
+                    Proposal proposal = new Proposal(
+                            "request",
+                            startLocation,
+                            endLocation,
+                            currentUser.getUserId()
+                    );
+                    saveProposal(proposal, isOffer);
+                    Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
+                    clearForm();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Toast.makeText(getContext(), "Failed to load points", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+
             String carModel = carModelEdit.getText().toString().trim();
             String seatsStr = availableSeatsEdit.getText().toString().trim();
 
@@ -159,18 +193,10 @@ public class CreateProposalFragment extends Fragment {
             );
             saveProposal(proposal, isOffer);
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
-        } else {
-            Proposal proposal = new Proposal(
-                    "request",
-                    startLocation,
-                    endLocation,
-                    currentUser.getUserId()
-            );
-            saveProposal(proposal, isOffer);
-            Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
+            clearForm();
         }
-        clearForm();
     }
+
 
     private User getCurrentUser() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -201,7 +227,7 @@ public class CreateProposalFragment extends Fragment {
                     Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();
                     clearForm();
 
-                    // Start LoadingActivity after successful save
+
                     Intent intent = new Intent(getActivity(), LoadingActivity.class);
                     intent.putExtra("proposalId", proposalId);
                     intent.putExtra("isDriver", isDriver);

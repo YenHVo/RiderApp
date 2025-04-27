@@ -95,7 +95,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // Logout button click handler
+
         logoutButton.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(HomeActivity.this, MainActivity.class);
@@ -143,12 +143,45 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-        }
+    public void updatePointsAfterRide(String driverId, String riderId) {
+
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
+        driverRef.get().addOnSuccessListener(driverSnapshot -> {
+            if (driverSnapshot.exists()) {
+                Long driverPoints = driverSnapshot.getValue(Long.class);
+                if (driverPoints == null) driverPoints = 0L;
+                driverRef.setValue(driverPoints + 100);
+            }
+        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to update driver points: " + e.getMessage()));
+
+
+        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
+        riderRef.get().addOnSuccessListener(riderSnapshot -> {
+            if (riderSnapshot.exists()) {
+                Long riderPoints = riderSnapshot.getValue(Long.class);
+                if (riderPoints == null) riderPoints = 0L;
+                long updatedPoints = riderPoints - 100;
+                if (updatedPoints < 0) updatedPoints = 0;
+                riderRef.setValue(updatedPoints);
+            }
+        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to update rider points: " + e.getMessage()));
     }
-}
+
+
+    @Override
+              protected void onStart() {
+                  super.onStart();
+                  if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                      startActivity(new Intent(this, MainActivity.class));
+                      finish();
+
+                      Intent intent = getIntent();
+                      String driverId = intent.getStringExtra("driverId");
+                      String riderId = intent.getStringExtra("riderId");
+
+                      if (driverId != null && riderId != null) {
+                          updatePointsAfterRide(driverId, riderId);
+                  }
+              }
+          }
+      }

@@ -1,5 +1,7 @@
 package edu.uga.cs.riderapp.activities;
 
+
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -17,6 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import edu.uga.cs.riderapp.activities.HomeActivity;
+
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -415,6 +420,15 @@ public class LoadingActivity extends AppCompatActivity {
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
 
                     proposalRef.child("status").setValue("completed");
+
+                    String driverId = snapshot.child("driverId").getValue(String.class);
+                    String riderId = snapshot.child("riderId").getValue(String.class);
+
+
+                    Intent intent = new Intent(LoadingActivity.this, HomeActivity.class);
+                    intent.putExtra("driverId", driverId);
+                    intent.putExtra("riderId", riderId);
+                    startActivity(intent);
 
                     Toast.makeText(LoadingActivity.this, "Ride completed!", Toast.LENGTH_SHORT).show();
                     showCompletedScreen();
