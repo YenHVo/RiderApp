@@ -270,6 +270,8 @@ public class LoadingActivity extends AppCompatActivity {
             riderMatchDetails.setText(details);
             driverAcceptedLayout.setVisibility(View.GONE);
         }
+        driverButtonContainer.setVisibility(View.GONE);
+        riderButtonContainer.setVisibility(View.GONE);
         returnHomeButton.setVisibility(View.GONE);
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.VISIBLE);

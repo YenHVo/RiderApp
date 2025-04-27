@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -77,6 +78,7 @@ public class ProposalListFragment extends Fragment {
 
         adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
             public void onAcceptClick(Proposal proposal) {
+                /*
                 boolean isDriver = "request".equals(proposal.getType());
 
                 DatabaseReference proposalRef = FirebaseDatabase.getInstance()
@@ -91,7 +93,37 @@ public class ProposalListFragment extends Fragment {
                     proposalRef.child("riderId").setValue(currentUserId);
                 }
                 checkBothUsersConfirmed(proposal);
-                //updateProposalConfirmation(proposal, isDriver);
+                Intent intent = new Intent(getActivity(), LoadingActivity.class);
+                intent.putExtra("proposalId", proposal.getProposalId());
+                intent.putExtra("isDriver", isDriver);
+                startActivity(intent);
+            }*/
+
+                boolean isDriver = "request".equals(proposal.getType());
+                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
+                        .getReference("proposals")
+                        .child(proposal.getProposalId());
+
+                // Get current user's name from Firebase Auth
+                FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                String currentUserName = currentFirebaseUser != null ?
+                        (currentFirebaseUser.getDisplayName() != null ?
+                                currentFirebaseUser.getDisplayName() :
+                                currentFirebaseUser.getEmail() != null ?
+                                        currentFirebaseUser.getEmail().split("@")[0] : "User") :
+                        "User";
+
+                if (isDriver) {
+                    proposalRef.child("driverStatus").setValue("accepted");
+                    proposalRef.child("driverId").setValue(currentUserId);
+                    proposalRef.child("driverName").setValue(currentUserName);  // Add this line
+                } else {
+                    proposalRef.child("riderStatus").setValue("accepted");
+                    proposalRef.child("riderId").setValue(currentUserId);
+                    proposalRef.child("riderName").setValue(currentUserName);  // Add this line
+                }
+
+                checkBothUsersConfirmed(proposal);
                 Intent intent = new Intent(getActivity(), LoadingActivity.class);
                 intent.putExtra("proposalId", proposal.getProposalId());
                 intent.putExtra("isDriver", isDriver);
@@ -141,7 +173,7 @@ public class ProposalListFragment extends Fragment {
     private void loadProposalsFromFirebase() {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
 
-        proposalsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        proposalsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 proposals.clear();
