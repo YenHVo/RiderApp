@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -36,17 +37,16 @@ public class LoadingActivity extends AppCompatActivity {
     private String currentUserId;
 
     private ProgressBar progressBar;
+    private ImageButton backButton;
     private TextView loadingText, subText;
     private LinearLayout driverAcceptedLayout, riderAcceptedLayout;
     private TextView driverMatchDetails, riderMatchDetails;
     private LinearLayout driverButtonContainer, riderButtonContainer;
     private Button driverAcceptButton, driverRejectButton;
     private Button riderAcceptButton, riderRejectButton;
-    private Button cancelButton;
+    private Button returnHomeButton;
     private LinearLayout dualButtonContainer;
-    private Button backButton, completeButton;
-
-
+    private Button cancelButton, completeButton;
     private DatabaseReference proposalRef;
 
     @Override
@@ -59,8 +59,6 @@ public class LoadingActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-
 
         proposalId = getIntent().getStringExtra("proposalId");
         isDriver = getIntent().getBooleanExtra("isDriver", false);
@@ -80,14 +78,15 @@ public class LoadingActivity extends AppCompatActivity {
     private void initializeViews() {
         progressBar = findViewById(R.id.progressBar);
         loadingText = findViewById(R.id.loadingText);
+        backButton = findViewById(R.id.backButton);
         subText = findViewById(R.id.subText);
         driverAcceptedLayout = findViewById(R.id.driverAcceptedLayout);
         riderAcceptedLayout = findViewById(R.id.riderAcceptedLayout);
         driverMatchDetails = findViewById(R.id.driverMatchDetails);
         riderMatchDetails = findViewById(R.id.riderMatchDetails);
-        cancelButton = findViewById(R.id.cancelButton);
+        returnHomeButton = findViewById(R.id.returnHomeButton);
         dualButtonContainer = findViewById(R.id.dualButtonContainer);
-        backButton = findViewById(R.id.backButton);
+        cancelButton = findViewById(R.id.cancelButton);
         completeButton = findViewById(R.id.completeButton);
         driverButtonContainer = findViewById(R.id.driverButtonContainer);
         riderButtonContainer = findViewById(R.id.riderButtonContainer);
@@ -95,29 +94,16 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton = findViewById(R.id.driverRejectButton);
         riderAcceptButton = findViewById(R.id.riderAcceptButton);
         riderRejectButton = findViewById(R.id.riderRejectButton);
-        isDriver = getIntent().getBooleanExtra("isDriver", false);
-        backButton.setVisibility(View.GONE);
-
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resetToWaitingState();
-                Log.d("BackButton", "Back button clicked, UI reset to waiting state.");
-            }
-        });
-
     }
 
     private void setupButtonListeners() {
-        cancelButton.setOnClickListener(v -> cancelProposal());
-        backButton.setOnClickListener(v -> navigateToHome());
+        backButton.setOnClickListener(v -> cancelProposal());
+        returnHomeButton.setOnClickListener(v -> navigateToHome());
         completeButton.setOnClickListener(v -> markRideCompleted());
         driverAcceptButton.setOnClickListener(v -> acceptProposal());
         driverRejectButton.setOnClickListener(v -> rejectProposal());
         riderAcceptButton.setOnClickListener(v -> acceptProposal());
         riderRejectButton.setOnClickListener(v -> rejectProposal());
-
-
     }
 
     private void setupDatabaseListener() {
@@ -182,14 +168,14 @@ public class LoadingActivity extends AppCompatActivity {
         loadingText.setVisibility(View.VISIBLE);
         loadingText.setText("Waiting for a match...");
         subText.setVisibility(View.VISIBLE);
+        backButton.setVisibility(View.VISIBLE);
 
         driverAcceptedLayout.setVisibility(View.GONE);
         riderAcceptedLayout.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
-
-        cancelButton.setVisibility(View.VISIBLE);
+        returnHomeButton.setVisibility(View.GONE);
     }
 
     private void showWaitingForConfirmationState() {
@@ -197,20 +183,23 @@ public class LoadingActivity extends AppCompatActivity {
         loadingText.setVisibility(View.VISIBLE);
         loadingText.setText("Waiting for confirmation...");
         subText.setVisibility(View.VISIBLE);
+        backButton.setVisibility(View.VISIBLE);
 
         driverAcceptedLayout.setVisibility(View.GONE);
         riderAcceptedLayout.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
-
-        cancelButton.setVisibility(View.VISIBLE);
+        returnHomeButton.setVisibility(View.GONE);
     }
 
     private void showConfirmationScreen(Proposal proposal) {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
+        backButton.setVisibility(View.GONE);
+        returnHomeButton.setVisibility(View.GONE);
+        dualButtonContainer.setVisibility(View.GONE);
 
         String otherUserId = isDriver ? proposal.getRiderId() : proposal.getDriverId();
         fetchUserDetails(otherUserId, proposal, details -> {
@@ -224,15 +213,13 @@ public class LoadingActivity extends AppCompatActivity {
                 riderButtonContainer.setVisibility(View.VISIBLE);
             }
         });
-
-        cancelButton.setVisibility(View.GONE);
-        dualButtonContainer.setVisibility(View.GONE);
     }
 
     private void showAcceptedScreen(Proposal proposal) {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
+        backButton.setVisibility(View.GONE);
 
         String otherUserId = isDriver ? proposal.getRiderId() : proposal.getDriverId();
         fetchUserDetails(otherUserId, proposal, details -> {
@@ -245,6 +232,7 @@ public class LoadingActivity extends AppCompatActivity {
             }
         });
 
+        returnHomeButton.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
         cancelButton.setVisibility(View.GONE);
@@ -253,31 +241,25 @@ public class LoadingActivity extends AppCompatActivity {
 
     private void showCompletedScreen() {
         progressBar.setVisibility(View.GONE);
-        loadingText.setVisibility(View.GONE);
-        subText.setVisibility(View.GONE);
+        loadingText.setVisibility(View.VISIBLE);
+        loadingText.setText("Ride Completed!");
+        subText.setVisibility(View.VISIBLE);
+
+        backButton.setVisibility(View.GONE);
+        driverAcceptedLayout.setVisibility(View.GONE);
+        riderAcceptedLayout.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
-        cancelButton.setVisibility(View.GONE);
+
         dualButtonContainer.setVisibility(View.GONE);
+        returnHomeButton.setVisibility(View.VISIBLE);
+
         if (isDriver) {
-            driverAcceptedLayout.setVisibility(View.VISIBLE);
-            driverMatchDetails.setText("Ride Completed!\nThank you for your service.");
+            loadingText.setText("Thank you for your service.");
         } else {
-            riderAcceptedLayout.setVisibility(View.VISIBLE);
-            riderMatchDetails.setText("Ride Completed!\nThank you for your request.");
+            loadingText.setText("Thank you for your request.");
         }
-
-
-        backButton.setVisibility(View.VISIBLE);
-        Log.d("CompletedScreen", "Completed screen visible");
-
-
-        driverAcceptedLayout.requestLayout();
-        riderAcceptedLayout.requestLayout();
-        backButton.requestLayout();
     }
-
-
 
     private void fetchUserDetails(String userId, Proposal currentProposal, UserDetailsCallback callback) {
         if (userId == null || currentProposal == null) {
@@ -363,6 +345,7 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+    /*
     private void proposalAccepted(Proposal proposal) {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
@@ -415,7 +398,7 @@ public class LoadingActivity extends AppCompatActivity {
         }
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.VISIBLE);
-    }
+    }*/
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
@@ -457,13 +440,16 @@ public class LoadingActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> Toast.makeText(LoadingActivity.this, "Failed to cancel proposal", Toast.LENGTH_SHORT).show());
         }
     }
+
+    /*
     @Override
     public void onBackPressed() {
         resetToWaitingState();
         Log.d("LoadingActivity", "Back button pressed, UI reset to waiting state.");
         super.onBackPressed();
-    }
+    }*/
 
+    /*
     private void resetToWaitingState() {
         progressBar.setVisibility(View.VISIBLE);
         loadingText.setVisibility(View.VISIBLE);
@@ -477,7 +463,7 @@ public class LoadingActivity extends AppCompatActivity {
 
         cancelButton.setVisibility(View.VISIBLE);
         dualButtonContainer.setVisibility(View.GONE);
-    }
+    }*/
 
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);

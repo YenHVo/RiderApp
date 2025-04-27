@@ -9,6 +9,16 @@
     android:background="@android:color/white"
     android:padding="24dp">
 
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/back_arrow"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:scaleType="centerInside"/>
+
     <!-- Loading Container -->
     <LinearLayout
         android:layout_width="0dp"
@@ -203,12 +213,13 @@
             android:layout_height="1dp"
             android:background="#EEEEEE"/>
 
-        <!-- Waiting Screen -->
+        <!-- Complete Screen -->
         <Button
-            android:id="@+id/cancelButton"
+            android:id="@+id/returnHomeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="CANCEL RIDE"
+            android:text="RETURN HOME"
+            android:visibility="gone"
             android:textColor="@android:color/black"
             android:textAllCaps="false"
             android:textSize="16sp"
@@ -223,7 +234,7 @@
             android:visibility="gone">
 
             <Button
-                android:id="@+id/backButton"
+                android:id="@+id/cancelButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
