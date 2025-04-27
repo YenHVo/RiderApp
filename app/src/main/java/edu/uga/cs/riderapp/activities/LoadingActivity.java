@@ -45,9 +45,6 @@ public class LoadingActivity extends AppCompatActivity {
     private Button cancelButton;
     private LinearLayout dualButtonContainer;
     private Button backButton, completeButton;
-    private LinearLayout completedLayout;
-    private TextView completedDetails;
-    private Button completeBackButton;
 
 
     private DatabaseReference proposalRef;
@@ -98,9 +95,7 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton = findViewById(R.id.driverRejectButton);
         riderAcceptButton = findViewById(R.id.riderAcceptButton);
         riderRejectButton = findViewById(R.id.riderRejectButton);
-        completedLayout = findViewById(R.id.completedLayout);
-        completeBackButton = findViewById(R.id.completeBackButton);
-        completedDetails = findViewById(R.id.completedDetails);
+
     }
 
     private void setupButtonListeners() {
@@ -111,7 +106,7 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton.setOnClickListener(v -> rejectProposal());
         riderAcceptButton.setOnClickListener(v -> acceptProposal());
         riderRejectButton.setOnClickListener(v -> rejectProposal());
-        completeBackButton.setOnClickListener(v -> navigateToHome());
+
     }
 
     private void setupDatabaseListener() {
@@ -246,28 +241,31 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
     private void showCompletedScreen() {
-
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
-        driverAcceptedLayout.setVisibility(View.GONE);
-        riderAcceptedLayout.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
         riderButtonContainer.setVisibility(View.GONE);
         cancelButton.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
+        if (isDriver) {
+            driverAcceptedLayout.setVisibility(View.VISIBLE);
+            driverMatchDetails.setText("Ride Completed! Thank you for your service.");
+        } else {
+            riderAcceptedLayout.setVisibility(View.VISIBLE);
+            riderMatchDetails.setText("Ride Completed! Thank you for your request.");
+        }
 
 
-        completedLayout.setVisibility(View.VISIBLE);
-        completeBackButton.setVisibility(View.VISIBLE);
+        backButton.setVisibility(View.VISIBLE);
         Log.d("CompletedScreen", "Completed screen visible");
-        completedLayout.requestLayout();
-        completeBackButton.requestLayout();
-        TextView completedDetails = findViewById(R.id.completedDetails);
-        completedDetails.setText("You have successfully completed the ride!");
 
 
+        driverAcceptedLayout.requestLayout();
+        riderAcceptedLayout.requestLayout();
+        backButton.requestLayout();
     }
+
 
 
     private void fetchUserDetails(String userId, Proposal currentProposal, UserDetailsCallback callback) {
