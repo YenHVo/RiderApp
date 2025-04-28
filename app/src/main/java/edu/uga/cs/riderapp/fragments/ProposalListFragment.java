@@ -220,7 +220,8 @@ public class ProposalListFragment extends Fragment {
                         proposal.setType(type);
                         proposal.setStartLocation(startLocation);
                         proposal.setEndLocation(endLocation);
-                        proposal.setDateTime(dateTime != null ? dateTime : 0L);
+                        proposal.setDateTime(dateTime != null ? dateTime : new Date(0L));
+
 
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
