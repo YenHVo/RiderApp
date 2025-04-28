@@ -382,8 +382,10 @@ public class LoadingActivity extends AppCompatActivity {
                                 showAcceptedScreen(snapshot.getValue(Proposal.class));
                             }
                         }
+
                         @Override
-                        public void onCancelled(DatabaseError error) {}
+                        public void onCancelled(DatabaseError error) {
+                        }
                     });
                 });
     }
@@ -551,7 +553,7 @@ public class LoadingActivity extends AppCompatActivity {
     }*/
 
     public void updatePointsAfterRide(String driverId, String riderId) {
-        // Show loading indicator
+
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Updating points...");
         progressDialog.setCancelable(false);
@@ -560,7 +562,7 @@ public class LoadingActivity extends AppCompatActivity {
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
         DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
 
-        // 1. First update driver points
+
         driverRef.runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
@@ -580,7 +582,7 @@ public class LoadingActivity extends AppCompatActivity {
                             (databaseError != null ? databaseError.getMessage() : "Unknown error"));
                 }
 
-                // 2. After driver update completes (success or fail), update rider points
+
                 riderRef.runTransaction(new Transaction.Handler() {
                     @Override
                     public Transaction.Result doTransaction(MutableData mutableData) {
@@ -615,14 +617,15 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-    private void navigateToHome() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
-    }
 
-    /*
+    // private void navigateToHome() {
+    //   Intent intent = new Intent(this, HomeActivity.class);
+    // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+    //startActivity(intent);
+    //finish();
+    //}
+
+
     private void navigateToHome() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(this, HomeActivity.class);
@@ -630,6 +633,7 @@ public class LoadingActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }, 1000); // 1 second delay
-    }*/
 
+
+    }
 }
