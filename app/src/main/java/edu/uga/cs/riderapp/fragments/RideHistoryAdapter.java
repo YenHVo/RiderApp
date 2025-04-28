@@ -30,11 +30,21 @@ public class RideHistoryAdapter extends RecyclerView.Adapter<RideHistoryAdapter.
     public void onBindViewHolder(RideHistoryAdapter.ViewHolder holder, int position) {
         RideHistory ride = rideList.get(position);
 
-        holder.startLocation.setText("From: " + ride.getStartLocation());
-        holder.endLocation.setText("To: " + ride.getEndLocation());
-        holder.date.setText(ride.getDate());
-        holder.role.setText(ride.getRole().equals("driver") ? "Driver" : "Rider");
+        // Safely set the text for startLocation, endLocation, and date
+        holder.startLocation.setText(ride.getStartLocation() != null ? "From: " + ride.getStartLocation() : "From: N/A");
+        holder.endLocation.setText(ride.getEndLocation() != null ? "To: " + ride.getEndLocation() : "To: N/A");
+        holder.date.setText(ride.getDate() != null ? ride.getDate() : "Date: N/A");
+
+        // Handle the role value safely
+        String roleText = "Unknown";
+        if ("driver".equalsIgnoreCase(ride.getRole())) {
+            roleText = "Driver";
+        } else if ("rider".equalsIgnoreCase(ride.getRole())) {
+            roleText = "Rider";
+        }
+        holder.role.setText(roleText);
     }
+
 
     @Override
     public int getItemCount() {

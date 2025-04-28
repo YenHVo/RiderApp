@@ -20,12 +20,10 @@ import com.google.firebase.database.*;
 import edu.uga.cs.riderapp.fragments.RideHistoryAdapter;
 import edu.uga.cs.riderapp.models.RideHistory;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProfileFragment extends Fragment {
-
 
     private RecyclerView recyclerView;
     private RideHistoryAdapter adapter;
@@ -41,7 +39,7 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-
+        // Initialize UI elements
         recyclerView = view.findViewById(R.id.recyclerViewRideHistory);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         rideHistoryList = new ArrayList<>();
@@ -50,10 +48,13 @@ public class ProfileFragment extends Fragment {
 
         noHistoryTextView = view.findViewById(R.id.textViewNoHistory);
 
+        // Initialize Firebase Auth and Database reference
         auth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("ride_history");
 
+        // Load ride history
         loadRideHistory();
+
         return view;
     }
 
@@ -62,11 +63,9 @@ public class ProfileFragment extends Fragment {
         if (user == null) return;
 
         String userId = user.getUid();
+        rideHistoryList.clear(); // Clear the previous list
 
-
-        rideHistoryList.clear();
-
-
+        // Query rides where the user is the driver
         databaseReference.orderByChild("driverId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -74,7 +73,9 @@ public class ProfileFragment extends Fragment {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
                             RideHistory ride = rideSnapshot.getValue(RideHistory.class);
                             if (ride != null && "completed".equals(ride.getStatus())) {
-                                rideHistoryList.add(ride);
+                                if (!rideHistoryList.contains(ride)) {
+                                    rideHistoryList.add(ride);
+                                }
                             }
                         }
                         checkIfHistoryIsEmpty();
@@ -85,7 +86,7 @@ public class ProfileFragment extends Fragment {
                     public void onCancelled(@NonNull DatabaseError error) {}
                 });
 
-
+        // Query rides where the user is the rider
         databaseReference.orderByChild("riderId").equalTo(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -93,7 +94,6 @@ public class ProfileFragment extends Fragment {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
                             RideHistory ride = rideSnapshot.getValue(RideHistory.class);
                             if (ride != null && "completed".equals(ride.getStatus())) {
-
                                 if (!rideHistoryList.contains(ride)) {
                                     rideHistoryList.add(ride);
                                 }
@@ -109,6 +109,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void checkIfHistoryIsEmpty() {
+        // Show/hide the "no history" message
         if (rideHistoryList.isEmpty()) {
             noHistoryTextView.setVisibility(View.VISIBLE);
         } else {
