@@ -48,6 +48,10 @@ public class RideHistory {
 
     public String getStatus() { return status; }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getDate() {
         // Create a Date object from the timestamp
         Date date = new Date(dateTime);

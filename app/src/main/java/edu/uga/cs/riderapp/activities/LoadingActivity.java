@@ -40,6 +40,7 @@ import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
+import edu.uga.cs.riderapp.models.RideHistory;
 import edu.uga.cs.riderapp.models.User;
 
 
@@ -401,7 +402,7 @@ public class LoadingActivity extends AppCompatActivity {
                     Toast.makeText(this, "Proposal declined", Toast.LENGTH_SHORT).show();
                     navigateToHome();
                 });
-    }
+             }
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
@@ -416,11 +417,29 @@ public class LoadingActivity extends AppCompatActivity {
                 Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
                 String driverId = snapshot.child("driverId").getValue(String.class);
                 String riderId = snapshot.child("riderId").getValue(String.class);
+
+                // Extract startLocation, endLocation, and dateTime safely with null checks
+                String startLocation = snapshot.child("startLocation").getValue(String.class);
+                String endLocation = snapshot.child("endLocation").getValue(String.class);
+                Long dateTime = snapshot.child("dateTime").getValue(Long.class);
+
+                // Null check to ensure the necessary fields exist
+                if (startLocation == null || endLocation == null || dateTime == null) {
+                    Log.e("markRideCompleted", "Missing fields: startLocation, endLocation, or dateTime");
+                    return;
+                }
+
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
                     proposalRef.child("status").setValue("completed");
+
+                    // Call saveRideToHistory after both parties confirm the ride
+                    String role = isDriver ? "driver" : "rider";
+                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime, role);
+
                     updatePointsAfterRide(driverId, riderId);
                     showCompletedScreen();
                 }
+            }
 
                 /*
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
@@ -444,14 +463,14 @@ public class LoadingActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                 }*/
-            }
+
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(LoadingActivity.this, "Failed to complete ride", Toast.LENGTH_SHORT).show();
             }
         });
-    }
+}
 
     private void cancelProposal() {
         if (proposalRef != null) {
@@ -554,6 +573,29 @@ public class LoadingActivity extends AppCompatActivity {
         // Navigate to home after updates
         navigateToHome();
     }*/
+    private void saveRideToHistory(String driverId, String riderId, String startLocation, String endLocation, long dateTime, String role) {
+        // Create a new RideHistory object
+        RideHistory rideHistory = new RideHistory();
+        rideHistory.setDriverId(driverId);
+        rideHistory.setRiderId(riderId);
+        rideHistory.setStartLocation(startLocation);
+        rideHistory.setEndLocation(endLocation);
+        rideHistory.setDateTime(dateTime);
+        rideHistory.setRole(role);
+        rideHistory.setStatus("completed");  // You can adjust this status based on the actual ride state
+
+        // Save the ride history to Firebase
+        DatabaseReference rideHistoryRef = FirebaseDatabase.getInstance().getReference("ride_history");
+
+        // Create a unique ID for the ride history entry (you can use push() or a custom ID)
+        String rideHistoryId = rideHistoryRef.push().getKey();
+
+        // Save the ride history entry for both the driver and the rider
+        if (rideHistoryId != null) {
+            rideHistoryRef.child(driverId).child(rideHistoryId).setValue(rideHistory);
+            rideHistoryRef.child(riderId).child(rideHistoryId).setValue(rideHistory);
+        }
+    }
 
     public void updatePointsAfterRide(String driverId, String riderId) {
         // Validate IDs first
