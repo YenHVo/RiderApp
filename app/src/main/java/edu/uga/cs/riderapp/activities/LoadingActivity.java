@@ -556,40 +556,58 @@ public class LoadingActivity extends AppCompatActivity {
     }*/
 
     public void updatePointsAfterRide(String driverId, String riderId) {
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId);
-        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId);
+        // Validate IDs first
+        if (driverId == null || riderId == null) {
+            Log.e("LoadingActivity", "Invalid user IDs - driver: " + driverId + ", rider: " + riderId);
+            navigateToHome();
+            return;
+        }
 
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+        DatabaseReference driverRef = usersRef.child(driverId);
+        DatabaseReference riderRef = usersRef.child(riderId);
+
+        // First get current points
         driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot driverSnapshot) {
                 User driver = driverSnapshot.getValue(User.class);
+                if (driver == null) {
+                    Log.e("LoadingActivity", "Driver data not found");
+                    navigateToHome();
+                    return;
+                }
 
                 riderRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot riderSnapshot) {
                         User rider = riderSnapshot.getValue(User.class);
+                        if (rider == null) {
+                            Log.e("LoadingActivity", "Rider data not found");
+                            navigateToHome();
+                            return;
+                        }
 
                         // Calculate new points
                         long newDriverPoints = driver.getPoints() + 100;
                         long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
 
-                        // Update both users in a single transaction
+                        // Create update map
                         Map<String, Object> updates = new HashMap<>();
                         updates.put(driverId + "/points", newDriverPoints);
                         updates.put(riderId + "/points", newRiderPoints);
 
-                        FirebaseDatabase.getInstance().getReference("users").updateChildren(updates)
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        Log.d("LoadingActivity", "Points updated successfully");
-                                        // Add delay to ensure all listeners receive updates
-                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                            navigateToHome();
-                                        }, 1000);
-                                    } else {
-                                        Log.e("LoadingActivity", "Failed to update points", task.getException());
+                        // Perform atomic update
+                        usersRef.updateChildren(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("LoadingActivity", "Points updated successfully");
+                                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
                                         navigateToHome();
-                                    }
+                                    }, 1000);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("LoadingActivity", "Failed to update points", e);
+                                    navigateToHome();
                                 });
                     }
 

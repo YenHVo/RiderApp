@@ -125,38 +125,31 @@ public class HomeActivity extends AppCompatActivity {
 
         userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
 
-        // First load data immediately
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    user = snapshot.getValue(User.class);
-                    updateUserInfo();
-                    Log.d("HomeActivity", "Initial user data loaded");
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        updateUI(user);
+                        Log.d("HomeActivity", "User data updated - Points: " + user.getPoints());
+                    }
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Log.e("HomeActivity", "Initial load failed: " + error.getMessage());
+                Log.e("HomeActivity", "Failed to load user data", error.toException());
             }
-        });
+        };
 
-        // Then set up real-time listener
-        userListener = userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    user = snapshot.getValue(User.class);
-                    updateUserInfo();
-                    Log.d("HomeActivity", "Real-time update received");
-                }
-            }
+        userRef.addValueEventListener(userListener);
+    }
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e("HomeActivity", "Real-time listener cancelled: " + error.getMessage());
-            }
+    private void updateUI(User user) {
+        runOnUiThread(() -> {
+            userNameTextView.setText("Welcome, " + user.getName() + "!");
+            pointsTextView.setText(user.getPoints() + " points");
         });
     }
 
