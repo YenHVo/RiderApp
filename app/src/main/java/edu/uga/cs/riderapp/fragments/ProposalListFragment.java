@@ -26,7 +26,9 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.activities.HomeActivity;
@@ -48,7 +50,7 @@ public class ProposalListFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
     private List<Proposal> proposals = new ArrayList<>();
-    private String currentUserId;
+    //private String currentUserId;
 
     private DatabaseReference proposalsRef;
     private ValueEventListener proposalsListener;
@@ -96,8 +98,79 @@ public class ProposalListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
+            @Override
             public void onAcceptClick(Proposal proposal) {
-                /*
+                FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentFirebaseUser == null) {
+                    Toast.makeText(getContext(), "You are not logged in!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String currentUserId = currentFirebaseUser.getUid();
+                String currentUserName = currentFirebaseUser.getDisplayName() != null ?
+                        currentFirebaseUser.getDisplayName() :
+                        (currentFirebaseUser.getEmail() != null ? currentFirebaseUser.getEmail().split("@")[0] : "User");
+
+                boolean isDriver = "request".equals(proposal.getType());
+
+                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
+                        .getReference("proposals")
+                        .child(proposal.getProposalId());
+
+                Map<String, Object> updates = new HashMap<>();
+
+                if (isDriver) {
+                    // Driver accepting a rider request
+                    updates.put("driverId", currentUserId);
+                    updates.put("driverName", currentUserName);
+                    updates.put("driverStatus", "accepted");
+                    if (proposal.getCar() != null) updates.put("car", proposal.getCar());
+                    if (proposal.getAvailableSeats() > 0) updates.put("availableSeats", proposal.getAvailableSeats());
+                } else {
+                    // Rider accepting a driver offer
+                    updates.put("riderId", currentUserId);
+                    updates.put("riderName", currentUserName);
+                    updates.put("riderStatus", "accepted");
+                }
+
+                proposalRef.updateChildren(updates)
+                        .addOnSuccessListener(aVoid -> {
+                            checkBothUsersConfirmed(proposal);
+
+                            Intent intent = new Intent(getActivity(), LoadingActivity.class);
+                            intent.putExtra("proposalId", proposal.getProposalId());
+                            intent.putExtra("isDriver", isDriver);
+                            startActivity(intent);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(getContext(), "Failed to accept proposal.", Toast.LENGTH_SHORT).show();
+                        });
+            }
+
+            @Override
+            public void onCancelClick(Proposal proposal, View actionButtonsLayout) {
+                actionButtonsLayout.setVisibility(View.GONE);
+            }
+        });
+
+        recyclerView.setAdapter(adapter);
+        loadProposalsFromFirebase();
+
+        return view;
+    }
+
+    /*
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_proposal_list, container, false);
+
+        recyclerView = view.findViewById(R.id.list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
+            public void onAcceptClick(Proposal proposal) {
+
                 boolean isDriver = "request".equals(proposal.getType());
 
                 DatabaseReference proposalRef = FirebaseDatabase.getInstance()
@@ -118,6 +191,7 @@ public class ProposalListFragment extends Fragment {
                 startActivity(intent);
             }*/
 
+                /*
                 boolean isDriver = "request".equals(proposal.getType());
 
                 // Get current user's ID and name
@@ -173,7 +247,7 @@ public class ProposalListFragment extends Fragment {
         loadProposalsFromFirebase();
 
         return view;
-    }
+    }*/
 
     private void checkBothUsersConfirmed(Proposal proposal) {
         DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
@@ -202,7 +276,6 @@ public class ProposalListFragment extends Fragment {
             }
         });
     }
-
 
     private void loadProposalsFromFirebase() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
