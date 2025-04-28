@@ -167,10 +167,10 @@ public class CreateProposalFragment extends Fragment {
             return;
         }
 
-
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
         if (!isOffer) {
+            // Request proposal (rider)
             DatabaseReference userRef = FirebaseDatabase.getInstance()
                     .getReference("users")
                     .child(currentUser.getUserId())
@@ -197,17 +197,24 @@ public class CreateProposalFragment extends Fragment {
                         return;
                     }
 
-                    // Create the proposal (rider)
+                    // Create the request proposal (rider)
                     Proposal proposal = new Proposal(
                             "request",
                             startLocation,
                             endLocation,
-                            null,
+                            null, // riderId will be set later
                             currentUser.getUserId(),
                             null,
                             0,
                             dateTimeMillis
                     );
+
+                    if (proposal.getRiderId() == null) {
+                        Toast.makeText(getContext(), "Request missing riderId!", Toast.LENGTH_SHORT).show();
+                        Log.e("CreateProposal", "Request missing riderId");
+                        return;
+                    }
+
                     saveProposal(proposal, isOffer);
 
                     Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
@@ -221,9 +228,8 @@ public class CreateProposalFragment extends Fragment {
                     }
                 }
             });
-
         } else {
-            // Driver creating a ride offer
+            // Offer proposal (driver)
             String carModel = carModelEdit.getText().toString().trim();
             String seatsStr = availableSeatsEdit.getText().toString().trim();
 
@@ -243,27 +249,22 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
-            // Create the proposal (driver)
+            // Create the offer proposal (driver)
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
                     endLocation,
-                    currentUser.getUserId(),
-                    null,
+                    currentUser.getUserId(), // driverId will be set for offers
+                    null, // riderId will be set later
                     carModel,
                     availableSeats,
                     dateTimeMillis
             );
 
-            // Check that required fields are not null
-            if (proposal.getType().equals("offer") && proposal.getDriverId() == null) {
+            // Ensure driverId exists for offers
+            if (proposal.getDriverId() == null) {
                 Toast.makeText(getContext(), "Offer missing driverId!", Toast.LENGTH_SHORT).show();
                 Log.e("CreateProposal", "Offer missing driverId");
-                return;
-            }
-            if (proposal.getType().equals("request") && proposal.getRiderId() == null) {
-                Toast.makeText(getContext(), "Request missing riderId!", Toast.LENGTH_SHORT).show();
-                Log.e("CreateProposal", "Request missing riderId");
                 return;
             }
 
@@ -273,7 +274,6 @@ public class CreateProposalFragment extends Fragment {
             clearForm();
         }
     }
-
 
 
     private void showDatePickerDialog() {

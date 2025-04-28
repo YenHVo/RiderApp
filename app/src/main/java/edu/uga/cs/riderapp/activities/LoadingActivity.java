@@ -494,17 +494,18 @@ public class LoadingActivity extends AppCompatActivity {
                                 DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
                                 DatabaseReference requestedRidesRef = FirebaseDatabase.getInstance().getReference("requested_rides");
 
+                                // Handle based on the user's role (driver or rider)
                                 if (isDriver) {
                                     requestedRidesRef.child(proposalRef.getKey()).removeValue();
                                 } else {
                                     offeredRidesRef.child(proposalRef.getKey()).removeValue();
                                 }
 
-                                // Now you can add the ride to accepted rides for both rider and driver
+                                // Add the ride to accepted rides for both rider and driver
                                 if (isDriver) {
-                                    acceptRideRequestAsDriver(snapshot); // Call this method to handle the driver's part
+                                    acceptRideRequestAsDriver(snapshot); // Driver's side logic
                                 } else {
-                                    acceptRideRequestAsRider(snapshot); // Call this method to handle the rider's part
+                                    acceptRideRequestAsRider(snapshot); // Rider's side logic
                                 }
                             }
                         }
@@ -524,11 +525,11 @@ public class LoadingActivity extends AppCompatActivity {
         String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-        // First check: driverId must be present
+        // Check for driverId in the proposal (because it's a request)
         proposalRef.child("driverId").get().addOnSuccessListener(driverSnapshot -> {
             String driverId = driverSnapshot.getValue(String.class);
             if (driverId == null) {
-                Log.e("acceptRideRequestAsRider", "Missing driverId for offer proposal.");
+                Log.e("acceptRideRequestAsRider", "Missing driverId for request proposal.");
                 Toast.makeText(this, "This offer is invalid (missing driver).", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -562,7 +563,6 @@ public class LoadingActivity extends AppCompatActivity {
                         // Update points for rider and driver
                         updatePointsAfterRide(driverId, riderId);
 
-
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         Log.e("TAG", "Failed to fetch dateTime", e);
@@ -582,18 +582,18 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
 
+
     private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
         String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-
-        // First check: riderId must be present
+        // Check for riderId in the proposal (because it's an offer)
         proposalRef.child("riderId").get().addOnSuccessListener(riderSnapshot -> {
             String riderId = riderSnapshot.getValue(String.class);
             if (riderId == null) {
-                Log.e("acceptRideRequestAsDriver", "Missing riderId for request proposal.");
+                Log.e("acceptRideRequestAsDriver", "Missing riderId for offer proposal.");
                 Toast.makeText(this, "This request is invalid (missing rider).", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -627,7 +627,6 @@ public class LoadingActivity extends AppCompatActivity {
                         // Update points for rider and driver
                         updatePointsAfterRide(driverId, riderId);
 
-
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         Log.e("TAG", "Failed to fetch dateTime", e);
@@ -645,7 +644,6 @@ public class LoadingActivity extends AppCompatActivity {
             Log.e("TAG", "Failed to fetch riderId", e);
         });
     }
-
 
     private void rejectProposal() {
         // Reset both statuses to pending
