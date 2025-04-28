@@ -44,6 +44,9 @@ public class ProposalListFragment extends Fragment {
     private List<Proposal> proposals = new ArrayList<>();
     private String currentUserId;
 
+    private DatabaseReference proposalsRef;
+    private ValueEventListener proposalsListener;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -171,57 +174,79 @@ public class ProposalListFragment extends Fragment {
 
 
     private void loadProposalsFromFirebase() {
-        DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            return;  // User is not logged in, don't try to load proposals
+        }
 
-        proposalsRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                proposals.clear();
+        // If proposalsRef or proposalsListener is not already set, set them up
+        if (proposalsRef == null) {
+            proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
+        }
 
-                for (DataSnapshot proposalSnap : snapshot.getChildren()) {
-                    String proposalId = proposalSnap.getKey();
-                    String type = proposalSnap.child("type").getValue(String.class);
-                    String startLocation = proposalSnap.child("startLocation").getValue(String.class);
-                    String endLocation = proposalSnap.child("endLocation").getValue(String.class);
-                    String userId = proposalSnap.child("userId").getValue(String.class);
+        // Add the listener only if it hasn't been added yet
+        if (proposalsListener == null) {
+            proposalsListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    proposals.clear();
 
-                    Proposal proposal = new Proposal();
-                    proposal.setProposalId(proposalId);
-                    proposal.setType(type);
-                    proposal.setStartLocation(startLocation);
-                    proposal.setEndLocation(endLocation);
+                    for (DataSnapshot proposalSnap : snapshot.getChildren()) {
+                        String proposalId = proposalSnap.getKey();
+                        String type = proposalSnap.child("type").getValue(String.class);
+                        String startLocation = proposalSnap.child("startLocation").getValue(String.class);
+                        String endLocation = proposalSnap.child("endLocation").getValue(String.class);
+                        String userId = proposalSnap.child("userId").getValue(String.class);
 
-                    if ("offer".equals(type)) {
-                        String carModel = proposalSnap.child("carModel").getValue(String.class);
-                        Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
-                        proposal.setCar(carModel);
-                        proposal.setAvailableSeats(seats != null ? seats : 0);
-                    }
-                    String driverStatus = proposalSnap.child("driverStatus").getValue(String.class);
-                    String riderStatus = proposalSnap.child("riderStatus").getValue(String.class);
+                        Proposal proposal = new Proposal();
+                        proposal.setProposalId(proposalId);
+                        proposal.setType(type);
+                        proposal.setStartLocation(startLocation);
+                        proposal.setEndLocation(endLocation);
 
-                    proposal.setDriverStatus(driverStatus != null ? driverStatus : "pending");
-                    proposal.setRiderStatus(riderStatus != null ? riderStatus : "pending");
-
-                    if ("pending".equals(proposal.getDriverStatus()) &&
-                            "pending".equals(proposal.getRiderStatus())) {
-                        proposals.add(proposal);
-                        if (userId != null && !userId.isEmpty()) {
-                            fetchUserById(userId, proposal);
-                        } else {
-                            Log.e("ProposalListFragment", "Proposal missing userId: " + proposal.getProposalId());
+                        if ("offer".equals(type)) {
+                            String carModel = proposalSnap.child("carModel").getValue(String.class);
+                            Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
+                            proposal.setCar(carModel);
+                            proposal.setAvailableSeats(seats != null ? seats : 0);
                         }
 
+                        String driverStatus = proposalSnap.child("driverStatus").getValue(String.class);
+                        String riderStatus = proposalSnap.child("riderStatus").getValue(String.class);
+
+                        proposal.setDriverStatus(driverStatus != null ? driverStatus : "pending");
+                        proposal.setRiderStatus(riderStatus != null ? riderStatus : "pending");
+
+                        if ("pending".equals(proposal.getDriverStatus()) && "pending".equals(proposal.getRiderStatus())) {
+                            proposals.add(proposal);
+                            if (userId != null && !userId.isEmpty()) {
+                                fetchUserById(userId, proposal);
+                            } else {
+                                Log.e("ProposalListFragment", "Proposal missing userId: " + proposal.getProposalId());
+                            }
+                        }
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    // Only show the Toast if user is logged in (i.e., not null)
+                    if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                        Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
                     }
                 }
-                adapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
-            }
-        });
+            };
+            proposalsRef.addValueEventListener(proposalsListener);
+        }
+    }
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Remove the listener when the fragment is stopped (including on logout)
+        if (proposalsRef != null && proposalsListener != null) {
+            proposalsRef.removeEventListener(proposalsListener);
+        }
     }
 
     private void fetchUserById(String userId, Proposal proposal) {
