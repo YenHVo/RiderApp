@@ -63,40 +63,17 @@ public class ProfileFragment extends Fragment {
         if (user == null) return;
 
         String userId = user.getUid();
-        rideHistoryList.clear(); // Clear the previous list
+        rideHistoryList.clear();
 
-        // Query rides where the user is the driver
-        databaseReference.orderByChild("driverId").equalTo(userId)
+
+        databaseReference.child(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
                             RideHistory ride = rideSnapshot.getValue(RideHistory.class);
-                            if (ride != null && "completed".equals(ride.getStatus())) {
-                                if (!rideHistoryList.contains(ride)) {
-                                    rideHistoryList.add(ride);
-                                }
-                            }
-                        }
-                        checkIfHistoryIsEmpty();
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
-                });
-
-        // Query rides where the user is the rider
-        databaseReference.orderByChild("riderId").equalTo(userId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
-                            RideHistory ride = rideSnapshot.getValue(RideHistory.class);
-                            if (ride != null && "completed".equals(ride.getStatus())) {
-                                if (!rideHistoryList.contains(ride)) {
-                                    rideHistoryList.add(ride);
-                                }
+                            if (ride != null) {
+                                rideHistoryList.add(ride);
                             }
                         }
                         checkIfHistoryIsEmpty();
