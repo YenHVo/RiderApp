@@ -1,7 +1,5 @@
 package edu.uga.cs.riderapp.activities;
 
-
-
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,8 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import edu.uga.cs.riderapp.activities.HomeActivity;
-
-
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -134,54 +130,6 @@ public class LoadingActivity extends AppCompatActivity {
         deleteProposalButton.setOnClickListener(v -> deleteProposal());
 
     }
-
-    /*
-    private void setupDatabaseListener() {
-        proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
-
-        proposalRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Proposal proposal = snapshot.getValue(Proposal.class);
-                    if (proposal != null) {
-                        String driverStatus = proposal.getDriverStatus();
-                        String riderStatus = proposal.getRiderStatus();
-
-                        // 1. Initial state - waiting for match
-                        if ("pending".equals(driverStatus) && "pending".equals(riderStatus)) {
-                            showInitialWaitingState();
-                        }
-                        // 2. Other party has accepted - show confirmation UI
-                        else if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {
-                            showConfirmationScreen(proposal);
-                        }
-                        // 3. Waiting for other party to confirm my acceptance
-                        else if ("accepted".equals(isDriver ? driverStatus : riderStatus) &&
-                                "pending".equals(isDriver ? riderStatus : driverStatus)) {
-                            showWaitingForConfirmationState();
-                        }
-                        // 4. Both have accepted - show ride details
-                        else if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
-                            showAcceptedScreen(proposal);
-                        }
-                        // 5. Ride completed
-                        else if (Boolean.TRUE.equals(proposal.getConfirmedByDriver()) && Boolean.TRUE.equals(proposal.getConfirmedByRider())) {
-                            proposalRef.child("status").setValue("completed");
-                            showCompletedScreen();
-                        } else if ("completed".equals(driverStatus) || "completed".equals(riderStatus)) {
-                            showCompletedScreen();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(LoadingActivity.this, "Failed to load proposal info", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }*/
 
     private void setupDatabaseListener() {
         proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
@@ -377,70 +325,6 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchUserDetails(String userId, Proposal currentProposal, UserDetailsCallback callback) {
-        if (userId == null || currentProposal == null) {
-            callback.onDetailsFetched("Details not available");
-            return;
-        }
-
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    callback.onDetailsFetched("User not found");
-                    return;
-                }
-
-                User user = snapshot.getValue(User.class);
-                if (user == null) {
-                    callback.onDetailsFetched("User details error");
-                    return;
-                }
-
-                String carModel = currentProposal.getCar(); // Get car from proposal first
-                if (carModel == null || carModel.isEmpty()) {
-                    // Fall back to user's car model if not in proposal
-                    carModel = snapshot.child("carModel").exists() ?
-                            snapshot.child("carModel").getValue(String.class) : "Not specified";
-                }
-
-                String userName = user.getName() != null ? user.getName() : "Unknown";
-                String seats = currentProposal.getAvailableSeats() > 0 ?
-                        String.valueOf(currentProposal.getAvailableSeats()) : "Not specified";
-
-                String details;
-                if (isDriver) {
-                    // Rider details
-                    details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
-                            userName,
-                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
-                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
-                } else {
-                    // Driver details - include car info
-                    details = String.format("Driver: %s\nCar: %s\nSeats: %s\nPickup: %s\nDropoff: %s",
-                            userName,
-                            carModel,
-                            seats,
-                            currentProposal.getStartLocation() != null ? currentProposal.getStartLocation() : "Not specified",
-                            currentProposal.getEndLocation() != null ? currentProposal.getEndLocation() : "Not specified");
-                }
-
-                callback.onDetailsFetched(details);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                callback.onDetailsFetched("Error loading details");
-                Log.e("LoadingActivity", "Database error: " + error.getMessage());
-            }
-        });
-    }
-
-    interface UserDetailsCallback {
-        void onDetailsFetched(String details);
-    }
-
     private void updateProposal() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Update Proposal");
@@ -522,7 +406,6 @@ public class LoadingActivity extends AppCompatActivity {
                     });
         }
     }
-
 
     private void acceptProposal() {
         String statusField = isDriver ? "driverStatus" : "riderStatus";
@@ -630,8 +513,6 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-
-
     private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
         String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
@@ -717,105 +598,6 @@ public class LoadingActivity extends AppCompatActivity {
                     Toast.makeText(LoadingActivity.this, "Failed to mark as completed", Toast.LENGTH_SHORT).show();
                 });
     }
-
-    /*
-    private void markRideCompleted() {
-        if (proposalRef == null) return;
-
-        // Set confirmation based on user role
-        String completedField = isDriver ? "confirmedByDriver" : "confirmedByRider";
-
-        // First, set our confirmation
-        proposalRef.child(completedField).setValue(true)
-                .addOnSuccessListener(aVoid -> {
-                    // Listen for any changes in the confirmation fields
-                    proposalRef.addChildEventListener(new ChildEventListener() {
-                        @Override
-                        public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-                            // No action needed for child added
-                        }
-
-                        @Override
-                        public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                            // When a child is changed, check if both confirmations are set to true
-                            Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
-                            Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
-
-                            String driverId = snapshot.child("driverId").getValue(String.class);
-                            String riderId = snapshot.child("riderId").getValue(String.class);
-
-                            String startLocation = snapshot.child("startLocation").getValue(String.class);
-                            String endLocation = snapshot.child("endLocation").getValue(String.class);
-                            Long dateTime = snapshot.child("dateTime").getValue(Long.class);
-
-                            if (startLocation == null || endLocation == null || dateTime == null) {
-                                Log.e("markRideCompleted", "Missing fields: startLocation, endLocation, or dateTime");
-                                return;
-                            }
-
-                            if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
-                                // Update status to "completed"
-                                proposalRef.child("status").setValue("completed");
-
-                                updatePointsAfterRide(driverId, riderId);
-                                removeRideFromAcceptedRides(driverId, riderId);
-                                saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
-
-                                // Ensure this runs on the main thread
-                                runOnUiThread(() -> {
-                                    showCompletedScreen();  // This should now work for both users
-                                });
-                            } else {
-                                // Only show this message if one user is still waiting for the other
-                                Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                        @Override
-                        public void onChildRemoved(DataSnapshot snapshot) {
-                            // No action needed for child removed
-                        }
-
-                        @Override
-                        public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-                            // No action needed for child moved
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError error) {
-                            Toast.makeText(LoadingActivity.this, "Failed to check ride status", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(LoadingActivity.this, "Failed to confirm ride", Toast.LENGTH_SHORT).show();
-                });
-    }*/
-
-
-                /*
-                if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
-
-                    proposalRef.child("status").setValue("completed");
-
-                    String driverId = snapshot.child("driverId").getValue(String.class);
-                    String riderId = snapshot.child("riderId").getValue(String.class);
-
-
-                    updatePointsAfterRide(driverId, riderId);
-
-                    // Start the HomeActivity and pass the driverId and riderId
-                    Intent intent = new Intent(LoadingActivity.this, HomeActivity.class);
-                    intent.putExtra("driverId", driverId);
-                    intent.putExtra("riderId", riderId);
-                    startActivity(intent);
-
-                    Toast.makeText(LoadingActivity.this, "Ride completed!", Toast.LENGTH_SHORT).show();
-                    showCompletedScreen();
-                } else {
-                    Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
-                }*/
-
 
     private void cancelProposal() {
         if (proposalRef != null) {
