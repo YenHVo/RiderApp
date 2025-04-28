@@ -44,14 +44,11 @@ public class ProposalListFragment extends Fragment {
 
     private static final String ARG_RIDER_ID = "riderId";
     private static final String ARG_DRIVER_ID = "driverId";
-
     private String currentRiderId;
     private String currentDriverId;
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
     private List<Proposal> proposals = new ArrayList<>();
-    //private String currentUserId;
-
     private DatabaseReference proposalsRef;
     private ValueEventListener proposalsListener;
     private Calendar selectedDateTime = Calendar.getInstance();
@@ -158,96 +155,6 @@ public class ProposalListFragment extends Fragment {
 
         return view;
     }
-
-    /*
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_proposal_list, container, false);
-
-        recyclerView = view.findViewById(R.id.list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
-            public void onAcceptClick(Proposal proposal) {
-
-                boolean isDriver = "request".equals(proposal.getType());
-
-                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
-                        .getReference("proposals")
-                        .child(proposal.getProposalId());
-
-                if (isDriver) {
-                    proposalRef.child("driverStatus").setValue("accepted");
-                    proposalRef.child("driverId").setValue(currentUserId);
-                } else {
-                    proposalRef.child("riderStatus").setValue("accepted");
-                    proposalRef.child("riderId").setValue(currentUserId);
-                }
-                checkBothUsersConfirmed(proposal);
-                Intent intent = new Intent(getActivity(), LoadingActivity.class);
-                intent.putExtra("proposalId", proposal.getProposalId());
-                intent.putExtra("isDriver", isDriver);
-                startActivity(intent);
-            }*/
-
-                /*
-                boolean isDriver = "request".equals(proposal.getType());
-
-                // Get current user's ID and name
-                FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-                String currentUserName = currentFirebaseUser != null ?
-                        (currentFirebaseUser.getDisplayName() != null ?
-                                currentFirebaseUser.getDisplayName() :
-                                currentFirebaseUser.getEmail() != null ?
-                                        currentFirebaseUser.getEmail().split("@")[0] : "User") :
-                        "User";
-
-                if (isDriver) {
-                    // Driver accepting a rider's request
-                    proposal.setDriverId(currentUserId);
-                    proposal.setDriverName(currentUserName);
-                    proposal.setDriverStatus("accepted");
-
-                    // Car model and seats were filled in ProposalRecyclerViewAdapter
-                    // and saved into the Proposal object already there!
-                } else {
-                    // Rider accepting a driver's offer
-                    proposal.setRiderId(currentUserId);
-                    proposal.setRiderName(currentUserName);
-                    proposal.setRiderStatus("accepted");
-                    // Rider doesn't modify car info
-                }
-
-                // Save the updated proposal to Firebase
-                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
-                        .getReference("proposals")
-                        .child(proposal.getProposalId());
-
-                proposalRef.setValue(proposal)
-                        .addOnSuccessListener(aVoid -> {
-                            checkBothUsersConfirmed(proposal);
-
-                            Intent intent = new Intent(getActivity(), LoadingActivity.class);
-                            intent.putExtra("proposalId", proposal.getProposalId());
-                            intent.putExtra("isDriver", isDriver);
-                            startActivity(intent);
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getContext(), "Failed to update proposal.", Toast.LENGTH_SHORT).show();
-                        });
-            }
-
-            public void onCancelClick(Proposal proposal, View actionButtonsLayout) {
-                actionButtonsLayout.setVisibility(View.GONE);
-            }
-        });
-
-        recyclerView.setAdapter(adapter);
-        loadProposalsFromFirebase();
-
-        return view;
-    }*/
 
     private void checkBothUsersConfirmed(Proposal proposal) {
         DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
@@ -379,9 +286,6 @@ public class ProposalListFragment extends Fragment {
         }
     }
 
-
-
-
     @Override
     public void onStop() {
         super.onStop();
@@ -390,92 +294,6 @@ public class ProposalListFragment extends Fragment {
             proposalsRef.removeEventListener(proposalsListener);
         }
     }
-
-    private void fetchUserById(String userId, Proposal proposal) {
-        if (userId == null) {
-            Log.e("ProposalListFragment", "User ID is null, cannot fetch user data.");
-            return;
-        }
-
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Instead of snapshot.getValue(User.class), manually build User
-                    User user = new User();
-
-                    user.setName(snapshot.child("name").getValue(String.class));
-                    user.setEmail(snapshot.child("email").getValue(String.class));
-
-
-                    Object pointsObj = snapshot.child("points").getValue();
-                    if (pointsObj instanceof Long) {
-                        user.setPoints((Long) pointsObj);
-                    } else if (pointsObj instanceof Double) {
-                        user.setPoints(((Double) pointsObj).longValue());
-                    } else {
-                        Log.e("ProposalListFragment", "Invalid points format for user " + userId + ": " + pointsObj);
-                        user.setPoints(0L); // Default value
-                    }
-
-                    // Now safely assign user fields to the proposal
-                    if ("offer".equals(proposal.getType())) {
-                        proposal.setDriverId(userId);
-                    } else {
-                        proposal.setRiderId(userId);
-                    }
-
-                    adapter.notifyDataSetChanged();
-                } else {
-                    Log.e("ProposalListFragment", "User not found in database for ID: " + userId);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e("ProposalListFragment", "Database error: " + error.getMessage());
-            }
-        });
-    }
-
-
-    private void fetchUserDetailsAndStartActivity(String driverId, String riderId, Proposal proposal) {
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        usersRef.child(driverId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                User driver = snapshot.getValue(User.class);
-
-                usersRef.child(riderId).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot riderSnapshot) {
-                        User rider = riderSnapshot.getValue(User.class);
-
-                        Intent intent = new Intent(getActivity(), LoadingActivity.class);
-                        intent.putExtra("driverName", driver != null ? driver.getName() : "N/A");
-                        intent.putExtra("riderName", rider != null ? rider.getName() : "N/A");
-
-                        startActivity(intent);
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError error) {
-                        Log.e("ProposalListFragment", "Failed to fetch rider details: " + error.getMessage());
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e("ProposalListFragment", "Failed to fetch driver details: " + error.getMessage());
-            }
-        });
-    }
-
-    private DatabaseReference proposalRef;
-    private ValueEventListener proposalListener;
-
 
     @Override
     public void onDestroyView() {
@@ -487,9 +305,6 @@ public class ProposalListFragment extends Fragment {
         proposals.clear();
         adapter.notifyDataSetChanged();
     }
-
-
-
 
 }
 
