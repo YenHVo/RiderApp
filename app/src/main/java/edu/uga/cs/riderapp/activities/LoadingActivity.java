@@ -855,6 +855,7 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
+    /*
     private void updatePointsAfterRide(String driverId, String riderId) {
         // Validate IDs first
         if (driverId == null || riderId == null) {
@@ -907,6 +908,32 @@ public class LoadingActivity extends AppCompatActivity {
             Log.e("LoadingActivity", "Failed to retrieve data", e);
             navigateToHome();
         });
+    }*/
+
+    private void updatePointsAfterRide(String driverId, String riderId) {
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+
+        Task<Void> driverUpdate = usersRef.child(driverId).child("points").get().continueWithTask(task -> {
+            Long currentDriverPoints = task.getResult().getValue(Long.class);
+            if (currentDriverPoints == null) currentDriverPoints = 0L;
+            return usersRef.child(driverId).child("points").setValue(currentDriverPoints + 100);
+        });
+
+        Task<Void> riderUpdate = usersRef.child(riderId).child("points").get().continueWithTask(task -> {
+            Long currentRiderPoints = task.getResult().getValue(Long.class);
+            if (currentRiderPoints == null) currentRiderPoints = 0L;
+            return usersRef.child(riderId).child("points").setValue(Math.max(currentRiderPoints - 100, 0));
+        });
+
+        Tasks.whenAll(driverUpdate, riderUpdate)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("LoadingActivity", "Both driver and rider points updated successfully!");
+                    navigateToHome();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("LoadingActivity", "Failed to update points", e);
+                    navigateToHome();
+                });
     }
 
     private void removeRideFromAcceptedRides(String driverId, String riderId) {
