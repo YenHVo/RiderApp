@@ -507,8 +507,6 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
 
-
-
     private void acceptRideRequestAsRider(DataSnapshot snapshot) {
         String riderEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
@@ -623,11 +621,12 @@ public class LoadingActivity extends AppCompatActivity {
                     Toast.makeText(this, "Proposal declined", Toast.LENGTH_SHORT).show();
                     navigateToHome();
                 });
-             }
+    }
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
 
+        // Set confirmation based on user role
         String completedField = isDriver ? "confirmedByDriver" : "confirmedByRider";
         proposalRef.child(completedField).setValue(true);
 
@@ -653,15 +652,29 @@ public class LoadingActivity extends AppCompatActivity {
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
                     proposalRef.child("status").setValue("completed");
 
-                    // Call saveRideToHistory after both parties confirm the ride
-                    String role = isDriver ? "driver" : "rider";
-                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime, role);
+                    // Save the ride to history
+                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
 
+                    // Update points for driver and rider
                     updatePointsAfterRide(driverId, riderId);
+
+                    // Remove the ride from accepted rides
+                    removeRideFromAcceptedRides(driverId, riderId);
+
+                    // Optionally, move to history or show a confirmation screen
                     showCompletedScreen();
+                } else {
+                    // Show message if both parties have not confirmed the ride
+                    Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                 }
             }
 
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoadingActivity.this, "Failed to complete ride", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
                 /*
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
 
@@ -685,13 +698,6 @@ public class LoadingActivity extends AppCompatActivity {
                     Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                 }*/
 
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(LoadingActivity.this, "Failed to complete ride", Toast.LENGTH_SHORT).show();
-            }
-        });
-}
 
     private void cancelProposal() {
         if (proposalRef != null) {
@@ -794,7 +800,7 @@ public class LoadingActivity extends AppCompatActivity {
         // Navigate to home after updates
         navigateToHome();
     }*/
-    private void saveRideToHistory(String driverId, String riderId, String startLocation, String endLocation, long dateTime, String role) {
+    private void saveRideToHistory(String driverId, String riderId, String startLocation, String endLocation, long dateTime) {
         // Create a new RideHistory object
         RideHistory rideHistory = new RideHistory();
         rideHistory.setDriverId(driverId);
@@ -802,23 +808,18 @@ public class LoadingActivity extends AppCompatActivity {
         rideHistory.setStartLocation(startLocation);
         rideHistory.setEndLocation(endLocation);
         rideHistory.setDateTime(dateTime);
-        rideHistory.setRole(role);
-        rideHistory.setStatus("completed");  // You can adjust this status based on the actual ride state
+        rideHistory.setStatus("completed");  // Set status to completed
 
-        // Save the ride history to Firebase
+        // Save the ride history to Firebase for both the driver and rider
         DatabaseReference rideHistoryRef = FirebaseDatabase.getInstance().getReference("ride_history");
-
-        // Create a unique ID for the ride history entry (you can use push() or a custom ID)
         String rideHistoryId = rideHistoryRef.push().getKey();
-
-        // Save the ride history entry for both the driver and the rider
         if (rideHistoryId != null) {
             rideHistoryRef.child(driverId).child(rideHistoryId).setValue(rideHistory);
             rideHistoryRef.child(riderId).child(rideHistoryId).setValue(rideHistory);
         }
     }
 
-    public void updatePointsAfterRide(String driverId, String riderId) {
+    private void updatePointsAfterRide(String driverId, String riderId) {
         // Validate IDs first
         if (driverId == null || riderId == null) {
             Log.e("LoadingActivity", "Invalid user IDs - driver: " + driverId + ", rider: " + riderId);
@@ -830,7 +831,7 @@ public class LoadingActivity extends AppCompatActivity {
         DatabaseReference driverRef = usersRef.child(driverId);
         DatabaseReference riderRef = usersRef.child(riderId);
 
-        // First get current points
+        // First get current points for both users
         driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot driverSnapshot) {
@@ -851,22 +852,20 @@ public class LoadingActivity extends AppCompatActivity {
                             return;
                         }
 
-                        // Calculate new points
+
                         long newDriverPoints = driver.getPoints() + 100;
                         long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
 
-                        // Create update map
+                        // Perform an atomic update of both users' points
                         Map<String, Object> updates = new HashMap<>();
                         updates.put(driverId + "/points", newDriverPoints);
                         updates.put(riderId + "/points", newRiderPoints);
 
-                        // Perform atomic update
+                        // Update points in the database
                         usersRef.updateChildren(updates)
                                 .addOnSuccessListener(aVoid -> {
                                     Log.d("LoadingActivity", "Points updated successfully");
-                                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                        navigateToHome();
-                                    }, 1000);
+                                    navigateToHome();
                                 })
                                 .addOnFailureListener(e -> {
                                     Log.e("LoadingActivity", "Failed to update points", e);
@@ -874,7 +873,6 @@ public class LoadingActivity extends AppCompatActivity {
                                 });
                     }
 
-                    @Override
                     public void onCancelled(DatabaseError error) {
                         Log.e("LoadingActivity", "Failed to read rider data", error.toException());
                         navigateToHome();
@@ -882,13 +880,21 @@ public class LoadingActivity extends AppCompatActivity {
                 });
             }
 
-            @Override
             public void onCancelled(DatabaseError error) {
                 Log.e("LoadingActivity", "Failed to read driver data", error.toException());
                 navigateToHome();
             }
         });
     }
+
+    private void removeRideFromAcceptedRides(String driverId, String riderId) {
+        DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
+
+        // Remove the ride for both the driver and rider
+        acceptedRidesRef.child(driverId).child(proposalRef.getKey()).removeValue();
+        acceptedRidesRef.child(riderId).child(proposalRef.getKey()).removeValue();
+    }
+
 
     // private void navigateToHome() {
     //   Intent intent = new Intent(this, HomeActivity.class);
@@ -899,13 +905,9 @@ public class LoadingActivity extends AppCompatActivity {
 
 
     private void navigateToHome() {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(this, HomeActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        }, 1000); // 1 second delay
-
-
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 }
