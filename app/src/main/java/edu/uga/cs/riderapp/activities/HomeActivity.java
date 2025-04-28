@@ -52,6 +52,131 @@ public class HomeActivity extends AppCompatActivity {
         pointsTextView = findViewById(R.id.pointsTextView);
         logoutButton = findViewById(R.id.logoutButton);
 
+        initializeFragment();
+        setupButtonListeners();
+        setupUserDataListener();
+    }
+
+    private void initializeFragment() {
+        if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) == null) {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProposalListFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        }
+    }
+
+    private void setupButtonListeners() {
+        findViewById(R.id.profileBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProfileFragment())
+                        .addToBackStack(null)
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
+        findViewById(R.id.createRideBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new CreateProposalFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
+        findViewById(R.id.homeBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new ProposalListFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
+        logoutButton.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(HomeActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        });
+    }
+
+    private void setupUserDataListener() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
+
+        // Remove previous listener if exists
+        if (userRef != null && userListener != null) {
+            userRef.removeEventListener(userListener);
+        }
+
+        userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+
+        // First load data immediately
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    user = snapshot.getValue(User.class);
+                    updateUserInfo();
+                    Log.d("HomeActivity", "Initial user data loaded");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("HomeActivity", "Initial load failed: " + error.getMessage());
+            }
+        });
+
+        // Then set up real-time listener
+        userListener = userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    user = snapshot.getValue(User.class);
+                    updateUserInfo();
+                    Log.d("HomeActivity", "Real-time update received");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("HomeActivity", "Real-time listener cancelled: " + error.getMessage());
+            }
+        });
+    }
+
+    private void updateUserInfo() {
+        if (user != null) {
+            runOnUiThread(() -> {
+                userNameTextView.setText("Welcome, " + user.getName() + "!");
+                pointsTextView.setText(user.getPoints() + " points");
+                Log.d("HomeActivity", "UI updated - Points: " + user.getPoints());
+            });
+        } else {
+            Log.w("HomeActivity", "User object is null during update");
+        }
+    }
+
+        /*
+        userNameTextView = findViewById(R.id.userNameTextView);
+        pointsTextView = findViewById(R.id.pointsTextView);
+        logoutButton = findViewById(R.id.logoutButton);
+
         getCurrentUserFromFirebase();
 
         if (savedInstanceState == null) {
@@ -102,7 +227,7 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-    }
+    }*/
 
     /*
     private void getCurrentUserFromFirebase() {
@@ -198,6 +323,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    /*
     private void updateUserInfo() {
         if (user != null) {
             userNameTextView.setText("Welcome, " + user.getName() + "!");
@@ -205,7 +331,7 @@ public class HomeActivity extends AppCompatActivity {
         } else {
             Toast.makeText(HomeActivity.this, "User info not available", Toast.LENGTH_SHORT).show();
         }
-    }
+    }*/
 
     /*
     @Override

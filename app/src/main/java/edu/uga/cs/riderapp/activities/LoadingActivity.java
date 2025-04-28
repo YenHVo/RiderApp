@@ -35,6 +35,9 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
@@ -553,68 +556,55 @@ public class LoadingActivity extends AppCompatActivity {
     }*/
 
     public void updatePointsAfterRide(String driverId, String riderId) {
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Updating points...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId);
         DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId);
 
-        // Update driver points
-        driverRef.runTransaction(new Transaction.Handler() {
+        driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                User user = mutableData.getValue(User.class);
-                if (user == null) {
-                    user = new User();
-                    user.setPoints(100L);
-                } else {
-                    user.setPoints(user.getPoints() + 100);
-                }
-                mutableData.setValue(user);
-                return Transaction.success(mutableData);
+            public void onDataChange(DataSnapshot driverSnapshot) {
+                User driver = driverSnapshot.getValue(User.class);
+
+                riderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot riderSnapshot) {
+                        User rider = riderSnapshot.getValue(User.class);
+
+                        // Calculate new points
+                        long newDriverPoints = driver.getPoints() + 100;
+                        long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
+
+                        // Update both users in a single transaction
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put(driverId + "/points", newDriverPoints);
+                        updates.put(riderId + "/points", newRiderPoints);
+
+                        FirebaseDatabase.getInstance().getReference("users").updateChildren(updates)
+                                .addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        Log.d("LoadingActivity", "Points updated successfully");
+                                        // Add delay to ensure all listeners receive updates
+                                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                            navigateToHome();
+                                        }, 1000);
+                                    } else {
+                                        Log.e("LoadingActivity", "Failed to update points", task.getException());
+                                        navigateToHome();
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Log.e("LoadingActivity", "Failed to read rider data", error.toException());
+                        navigateToHome();
+                    }
+                });
             }
 
             @Override
-            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
-                if (!committed) {
-                    Log.e("LoadingActivity", "Driver points update failed: " +
-                            (databaseError != null ? databaseError.getMessage() : "Unknown error"));
-                }
-
-                // Update rider points only after driver points are updated
-                riderRef.runTransaction(new Transaction.Handler() {
-                    @Override
-                    public Transaction.Result doTransaction(MutableData mutableData) {
-                        User user = mutableData.getValue(User.class);
-                        if (user == null) {
-                            user = new User();
-                            user.setPoints(0L);
-                        } else {
-                            long newPoints = user.getPoints() - 100;
-                            user.setPoints(Math.max(newPoints, 0));
-                        }
-                        mutableData.setValue(user);
-                        return Transaction.success(mutableData);
-                    }
-
-                    @Override
-                    public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
-                        progressDialog.dismiss();
-
-                        if (committed) {
-                            // Add a small delay to ensure Firebase has propagated the changes
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                navigateToHome();
-                            }, 500);
-                        } else {
-                            Toast.makeText(LoadingActivity.this,
-                                    "Points update had issues", Toast.LENGTH_SHORT).show();
-                            navigateToHome();
-                        }
-                    }
-                });
+            public void onCancelled(DatabaseError error) {
+                Log.e("LoadingActivity", "Failed to read driver data", error.toException());
+                navigateToHome();
             }
         });
     }
