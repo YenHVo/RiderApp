@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -34,7 +35,9 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
@@ -593,6 +596,7 @@ public class LoadingActivity extends AppCompatActivity {
         proposalRef.child(statusField).setValue("completed")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(LoadingActivity.this, "Marked as completed! Waiting for other user.", Toast.LENGTH_SHORT).show();
+                    checkAndSaveIfBothCompleted();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(LoadingActivity.this, "Failed to mark as completed", Toast.LENGTH_SHORT).show();
@@ -610,24 +614,85 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-    private void saveRideToHistory(String driverId, String riderId, String startLocation, String endLocation, long dateTime) {
-        // Create a new RideHistory object
-        RideHistory rideHistory = new RideHistory();
-        rideHistory.setDriverId(driverId);
-        rideHistory.setRiderId(riderId);
-        rideHistory.setStartLocation(startLocation);
-        rideHistory.setEndLocation(endLocation);
-        rideHistory.setDateTime(dateTime);
-        rideHistory.setStatus("completed");  // Set status to completed
 
-        // Save the ride history to Firebase for both the driver and rider
-        DatabaseReference rideHistoryRef = FirebaseDatabase.getInstance().getReference("ride_history");
-        String rideHistoryId = rideHistoryRef.push().getKey();
-        if (rideHistoryId != null) {
-            rideHistoryRef.child(driverId).child(rideHistoryId).setValue(rideHistory);
-            rideHistoryRef.child(riderId).child(rideHistoryId).setValue(rideHistory);
-        }
+    private void checkAndSaveIfBothCompleted() {
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String driverStatus = snapshot.child("driverStatus").getValue(String.class);
+                String riderStatus = snapshot.child("riderStatus").getValue(String.class);
+
+                if ("completed".equals(driverStatus) && "completed".equals(riderStatus)) {
+                    saveRideToHistory();
+                } else {
+                    Log.d("checkAndSaveIfBothCompleted", "Waiting for both users to complete.");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("checkAndSaveIfBothCompleted", "Failed to check completion status: " + error.getMessage());
+            }
+        });
     }
+    private void saveRideToHistory() {
+        if (proposalRef == null) return;
+
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String rideId = proposalRef.getKey();
+
+        if (rideId == null || currentUserId == null) {
+            Log.e("saveRideToHistory", "Missing rideId or currentUserId.");
+            return;
+        }
+
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String startLocation = snapshot.child("startLocation").getValue(String.class);
+                String endLocation = snapshot.child("endLocation").getValue(String.class);
+                Long dateTimeMillis = snapshot.child("dateTime").getValue(Long.class);
+                String driverId = snapshot.child("driverId").getValue(String.class);
+                String riderId = snapshot.child("riderId").getValue(String.class);
+
+                if (startLocation == null || endLocation == null || dateTimeMillis == null || driverId == null || riderId == null) {
+                    Log.e("saveRideToHistory", "Missing ride details.");
+                    return;
+                }
+
+                String driverRole = "Driver";
+                String riderRole = "Rider";
+
+                // Build minimal ride history map
+                Map<String, Object> driverHistory = new HashMap<>();
+                driverHistory.put("role", driverRole);
+                driverHistory.put("startLocation", startLocation);
+                driverHistory.put("endLocation", endLocation);
+                driverHistory.put("dateTime", dateTimeMillis);
+
+                Map<String, Object> riderHistory = new HashMap<>();
+                riderHistory.put("role", riderRole);
+                riderHistory.put("startLocation", startLocation);
+                riderHistory.put("endLocation", endLocation);
+                riderHistory.put("dateTime", dateTimeMillis);
+
+                DatabaseReference rideHistoryRef = FirebaseDatabase.getInstance().getReference("ride_history");
+
+                // Save for both driver and rider
+                rideHistoryRef.child(driverId).child(rideId).setValue(driverHistory);
+                rideHistoryRef.child(riderId).child(rideId).setValue(riderHistory);
+
+                Toast.makeText(LoadingActivity.this, "Ride saved to history!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("saveRideToHistory", "Failed to fetch proposal: " + error.getMessage());
+            }
+        });
+    }
+
+
 
     private void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
