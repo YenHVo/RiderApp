@@ -46,7 +46,7 @@ public class RideHistory {
     public long getDateTime() { return dateTime; }
     public void setDateTime(long dateTime) { this.dateTime = dateTime; }
 
-    public String getStatus() {return status; }
+    public String getStatus() { return status; }
 
     public String getDate() {
         // Create a Date object from the timestamp
