@@ -667,17 +667,15 @@ public class LoadingActivity extends AppCompatActivity {
         proposalRef.child(completedField).setValue(true)
                 .addOnSuccessListener(aVoid -> {
                     // Immediately listen for changes in both confirmedByDriver and confirmedByRider fields
-                    proposalRef.addChildEventListener(new ChildEventListener() {
+                    proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
-                        public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-                            // This is fired when a field is updated (any child of proposalRef)
-                        }
-
-                        @Override
-                        public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                            // Re-read the snapshot to check if both users have confirmed
+                        public void onDataChange(DataSnapshot snapshot) {
+                            // Log to verify values
                             Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
                             Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
+
+                            Log.d("markRideCompleted", "Driver confirmed: " + confirmedByDriver);
+                            Log.d("markRideCompleted", "Rider confirmed: " + confirmedByRider);
 
                             String driverId = snapshot.child("driverId").getValue(String.class);
                             String riderId = snapshot.child("riderId").getValue(String.class);
@@ -691,6 +689,7 @@ public class LoadingActivity extends AppCompatActivity {
                                 return;
                             }
 
+                            // Proceed only if both are confirmed
                             if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
                                 // Update status to "completed"
                                 proposalRef.child("status").setValue("completed");
@@ -699,21 +698,13 @@ public class LoadingActivity extends AppCompatActivity {
                                 removeRideFromAcceptedRides(driverId, riderId);
                                 saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
 
-                                // Both users should see the completed screen
-                                showCompletedScreen();
+                                // Ensure this runs on the main thread
+                                runOnUiThread(() -> {
+                                    showCompletedScreen();  // This should now work for both users
+                                });
                             } else {
                                 Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                             }
-                        }
-
-                        @Override
-                        public void onChildRemoved(DataSnapshot snapshot) {
-                            // Not used in this context
-                        }
-
-                        @Override
-                        public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-                            // Not used in this context
                         }
 
                         @Override
@@ -726,6 +717,7 @@ public class LoadingActivity extends AppCompatActivity {
                     Toast.makeText(LoadingActivity.this, "Failed to confirm ride", Toast.LENGTH_SHORT).show();
                 });
     }
+
 
                 /*
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
