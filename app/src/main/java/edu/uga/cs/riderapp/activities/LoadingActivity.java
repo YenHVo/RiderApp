@@ -135,6 +135,7 @@ public class LoadingActivity extends AppCompatActivity {
 
     }
 
+    /*
     private void setupDatabaseListener() {
         proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
 
@@ -170,6 +171,53 @@ public class LoadingActivity extends AppCompatActivity {
                             showCompletedScreen();
                         } else if ("completed".equals(driverStatus) || "completed".equals(riderStatus)) {
                             showCompletedScreen();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoadingActivity.this, "Failed to load proposal info", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }*/
+
+    private void setupDatabaseListener() {
+        proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
+
+        proposalRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Proposal proposal = snapshot.getValue(Proposal.class);
+                    if (proposal != null) {
+                        String driverStatus = proposal.getDriverStatus();
+                        String riderStatus = proposal.getRiderStatus();
+
+                        if ("completed".equals(driverStatus) && "completed".equals(riderStatus)) {
+                            showCompletedScreen();
+                            return;
+                        }
+
+                        if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
+                            showAcceptedScreen(proposal);
+                            return;
+                        }
+
+                        if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {
+                            showConfirmationScreen(proposal);
+                            return;
+                        }
+
+                        if ("accepted".equals(isDriver ? driverStatus : riderStatus) &&
+                                "pending".equals(isDriver ? riderStatus : driverStatus)) {
+                            showWaitingForConfirmationState();
+                            return;
+                        }
+
+                        if ("pending".equals(driverStatus) && "pending".equals(riderStatus)) {
+                            showInitialWaitingState();
                         }
                     }
                 }
@@ -656,7 +704,21 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+    private void markRideCompleted() {
+        if (proposalRef == null) return;
 
+        String statusField = isDriver ? "driverStatus" : "riderStatus";
+
+        proposalRef.child(statusField).setValue("completed")
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(LoadingActivity.this, "Marked as completed! Waiting for other user.", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(LoadingActivity.this, "Failed to mark as completed", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /*
     private void markRideCompleted() {
         if (proposalRef == null) return;
 
@@ -728,7 +790,7 @@ public class LoadingActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Toast.makeText(LoadingActivity.this, "Failed to confirm ride", Toast.LENGTH_SHORT).show();
                 });
-    }
+    }*/
 
 
                 /*
