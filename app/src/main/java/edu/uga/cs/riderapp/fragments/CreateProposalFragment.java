@@ -203,7 +203,7 @@ public class CreateProposalFragment extends Fragment {
                             startLocation,
                             endLocation,
                             null, // riderId will be set later
-                            currentUser.getUserId(),
+                            currentUser.getUserId(), // This should be set as riderId here
                             null,
                             0,
                             dateTimeMillis
@@ -254,7 +254,7 @@ public class CreateProposalFragment extends Fragment {
                     "offer",
                     startLocation,
                     endLocation,
-                    currentUser.getUserId(), // driverId will be set for offers
+                    currentUser.getUserId(), // This should be set as driverId here
                     null, // riderId will be set later
                     carModel,
                     availableSeats,

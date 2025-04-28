@@ -40,7 +40,11 @@ import edu.uga.cs.riderapp.models.User;
  */
 public class ProposalListFragment extends Fragment {
 
-    private static final String ARG_USER_ID = "user_id";
+    private static final String ARG_RIDER_ID = "riderId";
+    private static final String ARG_DRIVER_ID = "driverId";
+
+    private String currentRiderId;
+    private String currentDriverId;
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
     private List<Proposal> proposals = new ArrayList<>();
@@ -58,20 +62,28 @@ public class ProposalListFragment extends Fragment {
     public ProposalListFragment() {
     }
 
+
     @SuppressWarnings("unused")
-    public static ProposalListFragment newInstance(String userId) {
+    public static ProposalListFragment newInstance(String riderId, String driverId) {
         ProposalListFragment fragment = new ProposalListFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_USER_ID, userId);
+        if (riderId != null) {
+            args.putString(ARG_RIDER_ID, riderId);
+        }
+        if (driverId != null) {
+            args.putString(ARG_DRIVER_ID, driverId);
+        }
         fragment.setArguments(args);
         return fragment;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            currentUserId = getArguments().getString(ARG_USER_ID);
+            currentRiderId = getArguments().getString(ARG_RIDER_ID);
+            currentDriverId = getArguments().getString(ARG_DRIVER_ID);
         }
     }
 
@@ -213,7 +225,6 @@ public class ProposalListFragment extends Fragment {
                         String type = proposalSnap.child("type").getValue(String.class);
                         String startLocation = proposalSnap.child("startLocation").getValue(String.class);
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
-                        String userId = proposalSnap.child("userId").getValue(String.class);
 
                         // Extract dateTime from Firebase
                         Object dateTimeObject = proposalSnap.child("dateTime").getValue();
@@ -271,12 +282,6 @@ public class ProposalListFragment extends Fragment {
 
                         if ("pending".equals(proposal.getDriverStatus()) && "pending".equals(proposal.getRiderStatus())) {
                             proposals.add(proposal);
-
-                            if (userId != null && !userId.isEmpty()) {
-                                fetchUserById(userId, proposal);
-                            } else {
-                                Log.e("ProposalListFragment", "Proposal missing userId: " + proposal.getProposalId());
-                            }
                         }
                     }
 
@@ -300,6 +305,7 @@ public class ProposalListFragment extends Fragment {
             proposalsRef.addValueEventListener(proposalsListener);
         }
     }
+
 
 
 
