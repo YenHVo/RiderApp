@@ -155,42 +155,44 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
-
         long dateTimeMillis = selectedDateTime.getTimeInMillis();
 
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
         if (!isOffer) {
-            // Fetch user points asynchronously without blocking UI
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
-                    .child(currentUser.getUserId()).child("points");
+            DatabaseReference userRef = FirebaseDatabase.getInstance()
+                    .getReference("users")
+                    .child(currentUser.getUserId())
+                    .child("points");
 
             userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot snapshot) {
-                    // Fetch the points value and ensure it's a valid Long
-                    Long points = snapshot.getValue(Long.class);
+                    Object pointsObj = snapshot.getValue();
+                    long points = 0;
 
-                    if (points == null) {
-                        Log.e("CreateProposalFragment", "Points value is null or incorrectly formatted.");
-                        Toast.makeText(getContext(), "Error loading points. Please try again.", Toast.LENGTH_SHORT).show();
+                    if (pointsObj instanceof Long) {
+                        points = (Long) pointsObj;
+                    } else if (pointsObj instanceof Double) {
+                        points = ((Double) pointsObj).longValue();
+                    } else {
+                        Log.e("CreateProposalFragment", "Invalid points data: " + pointsObj);
+                        Toast.makeText(getContext(), "Account points are invalid. Contact support.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Ensure the user has enough points (100 points required)
                     if (points < 100) {
-                        Log.e("CreateProposalFragment", "Not enough points. User points: " + points);
                         Toast.makeText(getContext(), "Not enough points. Give a ride to get more.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Create the proposal for the rider
+                    // Create the proposal (rider)
                     Proposal proposal = new Proposal(
                             "request",
                             startLocation,
                             endLocation,
                             null,
-                            currentUser.getUserId(), // riderId
+                            currentUser.getUserId(),
                             null,
                             0,
                             new Date(dateTimeMillis)
@@ -208,8 +210,9 @@ public class CreateProposalFragment extends Fragment {
                     }
                 }
             });
+
         } else {
-            // Handling ride offer creation (driver)
+            // Driver creating a ride offer
             String carModel = carModelEdit.getText().toString().trim();
             String seatsStr = availableSeatsEdit.getText().toString().trim();
 
@@ -229,7 +232,7 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
-            // Create the proposal for the driver
+            // Create the proposal (driver)
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
@@ -246,6 +249,7 @@ public class CreateProposalFragment extends Fragment {
             clearForm();
         }
     }
+
 
 
     private void showDatePickerDialog() {

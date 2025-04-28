@@ -192,15 +192,13 @@ public class ProposalListFragment extends Fragment {
     private void loadProposalsFromFirebase() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            return;  // User is not logged in, don't try to load proposals
+            return;
         }
 
-        // If proposalsRef or proposalsListener is not already set, set them up
         if (proposalsRef == null) {
             proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
         }
 
-        // Add the listener only if it hasn't been added yet
         if (proposalsListener == null) {
             proposalsListener = new ValueEventListener() {
                 @Override
@@ -214,9 +212,17 @@ public class ProposalListFragment extends Fragment {
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                         String userId = proposalSnap.child("userId").getValue(String.class);
 
-                        // Correctly convert the timestamp to Date
-                        Long timestamp = proposalSnap.child("dateTime").getValue(Long.class);
-                        Date dateTime = (timestamp != null) ? new Date(timestamp) : new Date(0L);
+
+                        Object timestampObj = proposalSnap.child("dateTime").getValue();
+                        Date dateTime;
+                        if (timestampObj instanceof Long) {
+                            dateTime = new Date((Long) timestampObj);
+                        } else if (timestampObj instanceof Double) {
+                            dateTime = new Date(((Double) timestampObj).longValue());
+                        } else {
+                            Log.e("ProposalListFragment", "Unexpected dateTime format: " + timestampObj);
+                            dateTime = new Date(0L);
+                        }
 
                         Proposal proposal = new Proposal();
                         proposal.setProposalId(proposalId);
@@ -247,6 +253,7 @@ public class ProposalListFragment extends Fragment {
                             }
                         }
                     }
+
                     if (proposals != null && !proposals.isEmpty()) {
                         proposals.sort((p1, p2) -> p1.getDateTime().compareTo(p2.getDateTime()));
                     } else {
@@ -255,10 +262,8 @@ public class ProposalListFragment extends Fragment {
                     adapter.notifyDataSetChanged();
                 }
 
-
                 @Override
                 public void onCancelled(DatabaseError error) {
-                    // Only show the Toast if user is logged in (i.e., not null)
                     if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                         Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
                     }
@@ -267,6 +272,7 @@ public class ProposalListFragment extends Fragment {
             proposalsRef.addValueEventListener(proposalsListener);
         }
     }
+
     @Override
     public void onStop() {
         super.onStop();
@@ -287,8 +293,24 @@ public class ProposalListFragment extends Fragment {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    User user = snapshot.getValue(User.class);
+                    // Instead of snapshot.getValue(User.class), manually build User
+                    User user = new User();
 
+                    user.setName(snapshot.child("name").getValue(String.class));
+                    user.setEmail(snapshot.child("email").getValue(String.class));
+
+
+                    Object pointsObj = snapshot.child("points").getValue();
+                    if (pointsObj instanceof Long) {
+                        user.setPoints((Long) pointsObj);
+                    } else if (pointsObj instanceof Double) {
+                        user.setPoints(((Double) pointsObj).longValue());
+                    } else {
+                        Log.e("ProposalListFragment", "Invalid points format for user " + userId + ": " + pointsObj);
+                        user.setPoints(0L); // Default value
+                    }
+
+                    // Now safely assign user fields to the proposal
                     if ("offer".equals(proposal.getType())) {
                         proposal.setDriverId(userId);
                     } else {
@@ -307,6 +329,7 @@ public class ProposalListFragment extends Fragment {
             }
         });
     }
+
 
     private void fetchUserDetailsAndStartActivity(String driverId, String riderId, Proposal proposal) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
