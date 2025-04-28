@@ -29,6 +29,7 @@ import edu.uga.cs.riderapp.activities.HomeActivity;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -661,56 +662,71 @@ public class LoadingActivity extends AppCompatActivity {
 
         // Set confirmation based on user role
         String completedField = isDriver ? "confirmedByDriver" : "confirmedByRider";
-        proposalRef.child(completedField).setValue(true);
 
-        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
-                Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
-                String driverId = snapshot.child("driverId").getValue(String.class);
-                String riderId = snapshot.child("riderId").getValue(String.class);
+        // First, set our confirmation
+        proposalRef.child(completedField).setValue(true)
+                .addOnSuccessListener(aVoid -> {
+                    // Immediately listen for changes in both confirmedByDriver and confirmedByRider fields
+                    proposalRef.addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
+                            // This is fired when a field is updated (any child of proposalRef)
+                        }
 
+                        @Override
+                        public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                            // Re-read the snapshot to check if both users have confirmed
+                            Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
+                            Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
 
-                String startLocation = snapshot.child("startLocation").getValue(String.class);
-                String endLocation = snapshot.child("endLocation").getValue(String.class);
-                Long dateTime = snapshot.child("dateTime").getValue(Long.class);
+                            String driverId = snapshot.child("driverId").getValue(String.class);
+                            String riderId = snapshot.child("riderId").getValue(String.class);
 
+                            String startLocation = snapshot.child("startLocation").getValue(String.class);
+                            String endLocation = snapshot.child("endLocation").getValue(String.class);
+                            Long dateTime = snapshot.child("dateTime").getValue(Long.class);
 
-                if (startLocation == null || endLocation == null || dateTime == null) {
-                    Log.e("markRideCompleted", "Missing fields: startLocation, endLocation, or dateTime");
-                    return;
-                }
+                            if (startLocation == null || endLocation == null || dateTime == null) {
+                                Log.e("markRideCompleted", "Missing fields: startLocation, endLocation, or dateTime");
+                                return;
+                            }
 
-                if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
-                    proposalRef.child("status").setValue("completed");
+                            if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
+                                // Update status to "completed"
+                                proposalRef.child("status").setValue("completed");
 
+                                updatePointsAfterRide(driverId, riderId);
+                                removeRideFromAcceptedRides(driverId, riderId);
+                                saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
 
+                                // Both users should see the completed screen
+                                showCompletedScreen();
+                            } else {
+                                Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
+                            }
+                        }
 
+                        @Override
+                        public void onChildRemoved(DataSnapshot snapshot) {
+                            // Not used in this context
+                        }
 
+                        @Override
+                        public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+                            // Not used in this context
+                        }
 
-                    updatePointsAfterRide(driverId, riderId);
-
-
-                    removeRideFromAcceptedRides(driverId, riderId);
-
-
-                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
-
-
-                    showCompletedScreen();
-                } else {
-
-                    Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(LoadingActivity.this, "Failed to complete ride", Toast.LENGTH_SHORT).show();
-            }
-        });
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            Toast.makeText(LoadingActivity.this, "Failed to check ride status", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(LoadingActivity.this, "Failed to confirm ride", Toast.LENGTH_SHORT).show();
+                });
     }
+
                 /*
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
 
