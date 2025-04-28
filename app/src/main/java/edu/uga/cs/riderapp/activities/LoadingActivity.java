@@ -404,7 +404,15 @@ public class LoadingActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot snapshot) {
                 Boolean confirmedByDriver = snapshot.child("confirmedByDriver").getValue(Boolean.class);
                 Boolean confirmedByRider = snapshot.child("confirmedByRider").getValue(Boolean.class);
+                String driverId = snapshot.child("driverId").getValue(String.class);
+                String riderId = snapshot.child("riderId").getValue(String.class);
+                if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
+                    proposalRef.child("status").setValue("completed");
+                    updatePointsAfterRide(driverId, riderId);
+                    showCompletedScreen();
+                }
 
+                /*
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
 
                     proposalRef.child("status").setValue("completed");
@@ -425,7 +433,7 @@ public class LoadingActivity extends AppCompatActivity {
                     showCompletedScreen();
                 } else {
                     Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
-                }
+                }*/
             }
 
             @Override

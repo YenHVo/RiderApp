@@ -34,6 +34,8 @@ public class HomeActivity extends AppCompatActivity {
     private TextView pointsTextView;
     private Button logoutButton;
     private User user;
+    private DatabaseReference userRef;
+    private ValueEventListener userListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +64,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
 
-        //todo: profile fragment?
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
             try {
                 getSupportFragmentManager().beginTransaction()
@@ -73,7 +74,6 @@ public class HomeActivity extends AppCompatActivity {
                 Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
             }
         });
-
 
         findViewById(R.id.createRideBtn).setOnClickListener(v -> {
             try {
@@ -95,7 +95,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-
         logoutButton.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(HomeActivity.this, MainActivity.class);
@@ -105,6 +104,7 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    /*
     private void getCurrentUserFromFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -132,6 +132,36 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(HomeActivity.this, MainActivity.class));
             finish();
         }
+    }*/
+
+    private void getCurrentUserFromFirebase() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String currentUserId = currentUser.getUid();
+            userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
+
+            userListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        user = snapshot.getValue(User.class);
+                        updateUserInfo();
+                    } else {
+                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+                }
+            };
+            userRef.addValueEventListener(userListener);
+        } else {
+            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(HomeActivity.this, MainActivity.class));
+            finish();
+        }
     }
 
     private void updateUserInfo() {
@@ -143,6 +173,13 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userRef != null && userListener != null) {
+            userRef.removeEventListener(userListener);
+        }
+    }
 
     @Override
     protected void onStart() {
@@ -150,7 +187,9 @@ public class HomeActivity extends AppCompatActivity {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
-        } else {
+        }
+
+        /*else {
 
             Intent intent = getIntent();
             long updatedPoints = intent.getLongExtra("updatedPoints", -1);
@@ -163,7 +202,7 @@ public class HomeActivity extends AppCompatActivity {
                     Log.e("HomeActivity", "User object is not initialized.");
                 }
             }
-        }
+        }*/
     }
 }
 
