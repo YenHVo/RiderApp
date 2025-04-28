@@ -7,7 +7,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +67,7 @@ public class ProfileFragment extends Fragment {
 
         // Query rides where the user is the driver
         databaseReference.orderByChild("driverId").equalTo(userId)
-                .addValueEventListener(new ValueEventListener() {
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
@@ -84,14 +83,12 @@ public class ProfileFragment extends Fragment {
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("ProfileFragment", "Failed to load ride history: " + error.getMessage());
-                    }
+                    public void onCancelled(@NonNull DatabaseError error) {}
                 });
 
         // Query rides where the user is the rider
         databaseReference.orderByChild("riderId").equalTo(userId)
-                .addValueEventListener(new ValueEventListener() {
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         for (DataSnapshot rideSnapshot : snapshot.getChildren()) {
@@ -107,12 +104,9 @@ public class ProfileFragment extends Fragment {
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("ProfileFragment", "Failed to load ride history: " + error.getMessage());
-                    }
+                    public void onCancelled(@NonNull DatabaseError error) {}
                 });
     }
-
 
     private void checkIfHistoryIsEmpty() {
         // Show/hide the "no history" message

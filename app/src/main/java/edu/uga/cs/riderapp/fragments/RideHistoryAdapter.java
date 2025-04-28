@@ -4,16 +4,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.recyclerview.widget.RecyclerView;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.RideHistory;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class RideHistoryAdapter extends RecyclerView.Adapter<RideHistoryAdapter.ViewHolder> {
 
@@ -37,11 +33,7 @@ public class RideHistoryAdapter extends RecyclerView.Adapter<RideHistoryAdapter.
         // Safely set the text for startLocation, endLocation, and date
         holder.startLocation.setText(ride.getStartLocation() != null ? "From: " + ride.getStartLocation() : "From: N/A");
         holder.endLocation.setText(ride.getEndLocation() != null ? "To: " + ride.getEndLocation() : "To: N/A");
-
-        // Handle date formatting if it's a long (Unix timestamp)
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        String formattedDate = ride.getDate() != null ? sdf.format(new Date(ride.getDate())) : "Date: N/A";
-        holder.date.setText(formattedDate);
+        holder.date.setText(ride.getDate() != null ? ride.getDate() : "Date: N/A");
 
         // Handle the role value safely
         String roleText = "Unknown";
@@ -52,6 +44,7 @@ public class RideHistoryAdapter extends RecyclerView.Adapter<RideHistoryAdapter.
         }
         holder.role.setText(roleText);
     }
+
 
     @Override
     public int getItemCount() {
