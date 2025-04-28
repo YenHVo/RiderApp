@@ -11,6 +11,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -28,6 +30,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import edu.uga.cs.riderapp.R;
@@ -454,6 +458,7 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
+    /*
     public void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
         driverRef.get().addOnSuccessListener(driverSnapshot -> {
@@ -486,14 +491,70 @@ public class LoadingActivity extends AppCompatActivity {
                 Log.e("HomeActivity", "Rider points not found");
             }
         }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch rider points: " + e.getMessage()));
+    }*/
+
+    public void updatePointsAfterRide(String driverId, String riderId) {
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
+        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
+
+        // Update driver points
+        driverRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Long points = mutableData.getValue(Long.class);
+                if (points == null) {
+                    mutableData.setValue(100L);
+                } else {
+                    mutableData.setValue(points + 100);
+                }
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (committed) {
+                    Log.d("LoadingActivity", "Driver points updated successfully");
+                } else {
+                    Log.e("LoadingActivity", "Failed to update driver points: " + databaseError.getMessage());
+                }
+            }
+        });
+
+        // Update rider points
+        riderRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Long points = mutableData.getValue(Long.class);
+                if (points == null) {
+                    mutableData.setValue(0L);
+                } else {
+                    long newPoints = points - 100;
+                    mutableData.setValue(Math.max(newPoints, 0));
+                }
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (committed) {
+                    Log.d("LoadingActivity", "Rider points updated successfully");
+                } else {
+                    Log.e("LoadingActivity", "Failed to update rider points: " + databaseError.getMessage());
+                }
+            }
+        });
+
+        // Navigate to home after updates
+        navigateToHome();
     }
 
-
     private void navigateToHome() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Intent intent = new Intent(this, HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+        }, 1000); // 1 second delay
     }
 
 }
