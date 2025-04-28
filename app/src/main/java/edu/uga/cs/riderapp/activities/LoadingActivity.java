@@ -489,6 +489,15 @@ public class LoadingActivity extends AppCompatActivity {
                                 // Both the driver and the rider have accepted, show the accepted screen
                                 showAcceptedScreen(snapshot.getValue(Proposal.class));
 
+                                DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
+                                DatabaseReference requestedRidesRef = FirebaseDatabase.getInstance().getReference("requested_rides");
+
+                                if (isDriver) {
+                                    requestedRidesRef.child(proposalRef.getKey()).removeValue();
+                                } else {
+                                    offeredRidesRef.child(proposalRef.getKey()).removeValue();
+                                }
+
                                 // Now you can add the ride to accepted rides for both rider and driver
                                 if (isDriver) {
                                     acceptRideRequestAsDriver(snapshot); // Call this method to handle the driver's part
@@ -513,21 +522,16 @@ public class LoadingActivity extends AppCompatActivity {
         String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users");
 
-
         proposalRef.child("driverId").get().addOnSuccessListener(driverSnapshot -> {
             String driverId = snapshot.getValue(String.class);  // Correct usage of getValue
             Log.d("TAG", "Driver ID: " + driverId);
 
-
             driverRef.child(driverId).child("email").get().addOnSuccessListener(driverEmailSnapshot -> {
                 String driverEmail = driverSnapshot.getValue(String.class);
 
-
                 proposalRef.child("status").setValue("accepted");
 
-
                 DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
-
 
                 Ride acceptedRide = new Ride();
                 acceptedRide.setProposalId(proposalId);
@@ -535,17 +539,22 @@ public class LoadingActivity extends AppCompatActivity {
                 acceptedRide.setDriverEmail(driverEmail);
                 acceptedRide.setRiderEmail(riderEmail);
 
-
                 proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
-                    Long points = pointsSnapshot.getValue(Long.class);  // Correct usage of getValue
+                    Long points = pointsSnapshot.getValue(Long.class);
                     acceptedRide.setPoints(points);
 
+                    proposalRef.child("dateTime").get().addOnSuccessListener(dateSnapshot -> {
+                        Long dateTime = dateSnapshot.getValue(Long.class);
+                        acceptedRide.setDateTime(dateTime);
 
-                    acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
-                    acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
+                        acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
+                        acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
+                        Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
+                        Log.e("TAG", "Failed to fetch dateTime", e);
+                    });
 
-                    Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                 }).addOnFailureListener(e -> {
                     Log.e("TAG", "Failed to fetch points", e);
                 });
@@ -559,28 +568,22 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-
     private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
-        String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail(); // Driver email
-        String proposalId = proposalRef.getKey(); // Assuming proposalId is retrieved here
+        String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        String proposalId = proposalRef.getKey();
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users");
 
-
         proposalRef.child("riderId").get().addOnSuccessListener(riderSnapshot -> {
-            String riderId = snapshot.getValue(String.class);  // Correct usage of getValue
+            String riderId = snapshot.getValue(String.class);
             Log.d("TAG", "Rider ID: " + riderId);
-
 
             riderRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
                 String riderEmail = riderSnapshot.getValue(String.class);
 
-
                 proposalRef.child("status").setValue("accepted");
 
-
                 DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
-
 
                 Ride acceptedRide = new Ride();
                 acceptedRide.setProposalId(proposalId);
@@ -588,17 +591,22 @@ public class LoadingActivity extends AppCompatActivity {
                 acceptedRide.setDriverEmail(driverEmail);
                 acceptedRide.setRiderEmail(riderEmail);
 
-
                 proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
-                    Long points = pointsSnapshot.getValue(Long.class);  // Correct usage of getValue
+                    Long points = pointsSnapshot.getValue(Long.class);
                     acceptedRide.setPoints(points);
 
+                    proposalRef.child("dateTime").get().addOnSuccessListener(dateSnapshot -> {
+                        Long dateTime = dateSnapshot.getValue(Long.class);
+                        acceptedRide.setDateTime(dateTime);
 
-                    acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
-                    acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
+                        acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
+                        acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
+                        Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
+                        Log.e("TAG", "Failed to fetch dateTime", e);
+                    });
 
-                    Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                 }).addOnFailureListener(e -> {
                     Log.e("TAG", "Failed to fetch points", e);
                 });
@@ -612,7 +620,6 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-
     private void rejectProposal() {
         // Reset both statuses to pending
         proposalRef.child("driverStatus").setValue("pending");
@@ -622,6 +629,7 @@ public class LoadingActivity extends AppCompatActivity {
                     navigateToHome();
                 });
     }
+
 
     private void markRideCompleted() {
         if (proposalRef == null) return;
@@ -638,12 +646,12 @@ public class LoadingActivity extends AppCompatActivity {
                 String driverId = snapshot.child("driverId").getValue(String.class);
                 String riderId = snapshot.child("riderId").getValue(String.class);
 
-                // Extract startLocation, endLocation, and dateTime safely with null checks
+
                 String startLocation = snapshot.child("startLocation").getValue(String.class);
                 String endLocation = snapshot.child("endLocation").getValue(String.class);
                 Long dateTime = snapshot.child("dateTime").getValue(Long.class);
 
-                // Null check to ensure the necessary fields exist
+
                 if (startLocation == null || endLocation == null || dateTime == null) {
                     Log.e("markRideCompleted", "Missing fields: startLocation, endLocation, or dateTime");
                     return;
@@ -652,19 +660,22 @@ public class LoadingActivity extends AppCompatActivity {
                 if (Boolean.TRUE.equals(confirmedByDriver) && Boolean.TRUE.equals(confirmedByRider)) {
                     proposalRef.child("status").setValue("completed");
 
-                    // Save the ride to history
-                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
 
-                    // Update points for driver and rider
+
+
+
                     updatePointsAfterRide(driverId, riderId);
 
-                    // Remove the ride from accepted rides
+
                     removeRideFromAcceptedRides(driverId, riderId);
 
-                    // Optionally, move to history or show a confirmation screen
+
+                    saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
+
+
                     showCompletedScreen();
                 } else {
-                    // Show message if both parties have not confirmed the ride
+
                     Toast.makeText(LoadingActivity.this, "Waiting for other party to confirm...", Toast.LENGTH_SHORT).show();
                 }
             }
