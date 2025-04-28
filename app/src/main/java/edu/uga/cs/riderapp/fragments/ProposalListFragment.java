@@ -215,23 +215,24 @@ public class ProposalListFragment extends Fragment {
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                         String userId = proposalSnap.child("userId").getValue(String.class);
 
-                        long dateTimeMillis = selectedDateTime.getTimeInMillis();  // Default fallback value (could be removed)
-
-                        // Extract dateTime from proposal and handle the possible types (Long or Double)
+                        // Extract dateTime from Firebase
                         Object dateTimeObject = proposalSnap.child("dateTime").getValue();
-                        Date dateTime;
+                        long dateTimeMillis;
                         if (dateTimeObject instanceof Long) {
-                            dateTime = new Date((Long) dateTimeObject);  // If it's a Long, convert it to Date
+                            dateTimeMillis = (Long) dateTimeObject;
                         } else if (dateTimeObject instanceof Double) {
-                            dateTime = new Date(((Double) dateTimeObject).longValue());  // If it's a Double, convert it to Date
+                            dateTimeMillis = ((Double) dateTimeObject).longValue();
                         } else {
                             Log.e("ProposalListFragment", "Unexpected dateTime format: " + dateTimeObject);
-                            dateTime = new Date(0L); // Fallback to a default date if format is not expected
+                            dateTimeMillis = 0L; // fallback
                         }
 
+                        Proposal proposal = new Proposal();  // Now create it early
 
-
-                        Proposal proposal = new Proposal();
+                        if (type == null || (!type.equals("offer") && !type.equals("request"))) {
+                            Log.e("ProposalListFragment", "Invalid or missing type at key: " + proposalId);
+                            continue;
+                        }
                         proposal.setProposalId(proposalId);
                         proposal.setType(type);
                         proposal.setStartLocation(startLocation);
@@ -241,10 +242,27 @@ public class ProposalListFragment extends Fragment {
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
                             Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
+                            String driverId = proposalSnap.child("driverId").getValue(String.class);
+
                             proposal.setCar(carModel);
                             proposal.setAvailableSeats(seats != null ? seats : 0);
+                            proposal.setDriverId(driverId);
+
+                            if (driverId == null) {
+                                Log.e("ProposalListFragment", "Offer missing driverId at key: " + proposalId);
+                                continue;
+                            }
+                        } else if ("request".equals(type)) {
+                            String riderId = proposalSnap.child("riderId").getValue(String.class);
+                            proposal.setRiderId(riderId);
+
+                            if (riderId == null) {
+                                Log.e("ProposalListFragment", "Request missing riderId at key: " + proposalId);
+                                continue;
+                            }
                         }
 
+                        // Driver/Rider status
                         String driverStatus = proposalSnap.child("driverStatus").getValue(String.class);
                         String riderStatus = proposalSnap.child("riderStatus").getValue(String.class);
 
@@ -253,6 +271,7 @@ public class ProposalListFragment extends Fragment {
 
                         if ("pending".equals(proposal.getDriverStatus()) && "pending".equals(proposal.getRiderStatus())) {
                             proposals.add(proposal);
+
                             if (userId != null && !userId.isEmpty()) {
                                 fetchUserById(userId, proposal);
                             } else {
@@ -266,19 +285,23 @@ public class ProposalListFragment extends Fragment {
                     } else {
                         Log.d("ProposalListFragment", "Proposals list is empty or null");
                     }
+
                     adapter.notifyDataSetChanged();
                 }
 
-                    @Override
+                @Override
                 public void onCancelled(DatabaseError error) {
                     if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                         Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
                     }
                 }
             };
+
             proposalsRef.addValueEventListener(proposalsListener);
         }
     }
+
+
 
     @Override
     public void onStop() {

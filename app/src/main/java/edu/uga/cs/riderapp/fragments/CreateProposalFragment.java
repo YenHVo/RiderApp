@@ -254,6 +254,19 @@ public class CreateProposalFragment extends Fragment {
                     availableSeats,
                     dateTimeMillis
             );
+
+            // Check that required fields are not null
+            if (proposal.getType().equals("offer") && proposal.getDriverId() == null) {
+                Toast.makeText(getContext(), "Offer missing driverId!", Toast.LENGTH_SHORT).show();
+                Log.e("CreateProposal", "Offer missing driverId");
+                return;
+            }
+            if (proposal.getType().equals("request") && proposal.getRiderId() == null) {
+                Toast.makeText(getContext(), "Request missing riderId!", Toast.LENGTH_SHORT).show();
+                Log.e("CreateProposal", "Request missing riderId");
+                return;
+            }
+
             saveProposal(proposal, isOffer);
 
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
