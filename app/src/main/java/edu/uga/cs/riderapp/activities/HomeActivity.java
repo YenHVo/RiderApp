@@ -167,10 +167,10 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void updateUI(User user) {
-        runOnUiThread(() -> {
+        if (user != null) {
             userNameTextView.setText("Welcome, " + user.getName() + "!");
             pointsTextView.setText(user.getPoints() + " points");
-        });
+        }
     }
 
     private void updateUserInfo() {
@@ -354,6 +354,13 @@ public class HomeActivity extends AppCompatActivity {
             userRef.removeEventListener(userListener);
         }
     }*/
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userRef != null && userListener != null) {
+            userRef.removeEventListener(userListener);
+        }
+    }
 
     @Override
     protected void onStart() {

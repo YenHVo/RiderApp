@@ -550,6 +550,21 @@ public class LoadingActivity extends AppCompatActivity {
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
+                        driverRef.child(riderId).child("points").get().addOnSuccessListener(riderPointsSnapshot -> {
+                            Long currentPoints = riderPointsSnapshot.getValue(Long.class);
+                            if (currentPoints == null) currentPoints = 0L;
+                            Long updatedPoints = currentPoints + points;
+                            driverRef.child(riderId).child("points").setValue(updatedPoints); // Update rider points
+                        });
+
+                        // Update driver points
+                        driverRef.child(driverId).child("points").get().addOnSuccessListener(driverPointsSnapshot -> {
+                            Long currentDriverPoints = driverPointsSnapshot.getValue(Long.class);
+                            if (currentDriverPoints == null) currentDriverPoints = 0L;
+                            Long updatedDriverPoints = currentDriverPoints + points;
+                            driverRef.child(driverId).child("points").setValue(updatedDriverPoints); // Update driver points
+                        });
+
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         Log.e("TAG", "Failed to fetch dateTime", e);
@@ -572,14 +587,14 @@ public class LoadingActivity extends AppCompatActivity {
         String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users");
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users");  // Correct reference to "users"
 
         proposalRef.child("riderId").get().addOnSuccessListener(riderSnapshot -> {
-            String riderId = snapshot.getValue(String.class);
+            String riderId = riderSnapshot.getValue(String.class);  // Corrected to use riderSnapshot
             Log.d("TAG", "Rider ID: " + riderId);
 
-            riderRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
-                String riderEmail = riderSnapshot.getValue(String.class);
+            driverRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
+                String riderEmail = riderEmailSnapshot.getValue(String.class);  // Corrected to use riderEmailSnapshot
 
                 proposalRef.child("status").setValue("accepted");
 
@@ -602,6 +617,22 @@ public class LoadingActivity extends AppCompatActivity {
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
+                        // Update rider points
+                        driverRef.child(riderId).child("points").get().addOnSuccessListener(riderPointsSnapshot -> {
+                            Long currentPoints = riderPointsSnapshot.getValue(Long.class);
+                            if (currentPoints == null) currentPoints = 0L;
+                            Long updatedPoints = currentPoints + points;
+                            driverRef.child(riderId).child("points").setValue(updatedPoints);  // Update rider points
+                        });
+
+                        // Update driver points
+                        driverRef.child(driverId).child("points").get().addOnSuccessListener(driverPointsSnapshot -> {
+                            Long currentDriverPoints = driverPointsSnapshot.getValue(Long.class);
+                            if (currentDriverPoints == null) currentDriverPoints = 0L;
+                            Long updatedDriverPoints = currentDriverPoints + points;
+                            driverRef.child(driverId).child("points").setValue(updatedDriverPoints);  // Update driver points
+                        });
+
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         Log.e("TAG", "Failed to fetch dateTime", e);
@@ -619,6 +650,7 @@ public class LoadingActivity extends AppCompatActivity {
             Log.e("TAG", "Failed to fetch riderId", e);
         });
     }
+
 
     private void rejectProposal() {
         // Reset both statuses to pending
