@@ -209,11 +209,6 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#EEEEEE"/>
-
         <!-- Complete Screen -->
         <Button
             android:id="@+id/returnHomeButton"
@@ -263,7 +258,54 @@
                 android:backgroundTint="@color/black"
                 android:padding="16dp"/>
         </LinearLayout>
+
+        <!-- 📍 Added manageProposalButtons here -->
+        <LinearLayout
+            android:id="@+id/manageProposalButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/updateProposalButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="UPDATE"
+                android:textColor="@android:color/white"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:backgroundTint="@color/black"
+                android:padding="16dp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#EEEEEE" />
+
+            <Button
+                android:id="@+id/deleteProposalButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DELETE"
+                android:textColor="@android:color/black"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:backgroundTint="@android:color/transparent"
+                android:padding="16dp" />
+        </LinearLayout>
+
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEEEEE"
+        tools:layout_editor_absoluteX="32dp"
+        tools:layout_editor_absoluteY="684dp" />
 
+</androidx.constraintlayout.widget.ConstraintLayout>

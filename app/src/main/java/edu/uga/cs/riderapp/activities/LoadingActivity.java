@@ -63,6 +63,10 @@ public class LoadingActivity extends AppCompatActivity {
     private Button cancelButton, completeButton;
     private DatabaseReference proposalRef;
 
+    private Button updateProposalButton, deleteProposalButton;
+    private LinearLayout manageProposalButtons;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,6 +112,10 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton = findViewById(R.id.driverRejectButton);
         riderAcceptButton = findViewById(R.id.riderAcceptButton);
         riderRejectButton = findViewById(R.id.riderRejectButton);
+        manageProposalButtons = findViewById(R.id.manageProposalButtons);
+        updateProposalButton = findViewById(R.id.updateProposalButton);
+        deleteProposalButton = findViewById(R.id.deleteProposalButton);
+
     }
 
     private void setupButtonListeners() {
@@ -118,6 +126,9 @@ public class LoadingActivity extends AppCompatActivity {
         driverRejectButton.setOnClickListener(v -> rejectProposal());
         riderAcceptButton.setOnClickListener(v -> acceptProposal());
         riderRejectButton.setOnClickListener(v -> rejectProposal());
+        updateProposalButton.setOnClickListener(v -> updateProposal());
+        deleteProposalButton.setOnClickListener(v -> deleteProposal());
+
     }
 
     private void setupDatabaseListener() {
@@ -190,6 +201,8 @@ public class LoadingActivity extends AppCompatActivity {
         riderButtonContainer.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
         returnHomeButton.setVisibility(View.GONE);
+
+        manageProposalButtons.setVisibility(View.VISIBLE);
     }
 
     private void showWaitingForConfirmationState() {
@@ -205,6 +218,7 @@ public class LoadingActivity extends AppCompatActivity {
         riderButtonContainer.setVisibility(View.GONE);
         dualButtonContainer.setVisibility(View.GONE);
         returnHomeButton.setVisibility(View.GONE);
+        manageProposalButtons.setVisibility(View.GONE);
     }
 
     private void showConfirmationScreen(Proposal proposal) {
@@ -230,6 +244,7 @@ public class LoadingActivity extends AppCompatActivity {
             riderAcceptedLayout.setVisibility(View.GONE);
             driverButtonContainer.setVisibility(View.VISIBLE);
             riderButtonContainer.setVisibility(View.GONE);
+            manageProposalButtons.setVisibility(View.GONE);
         } else {
             // Display driver details with car information
             details = String.format("Driver: %s\nCar: %s\nAvailable Seats: %d\nPickup: %s\nDropoff: %s",
@@ -252,6 +267,7 @@ public class LoadingActivity extends AppCompatActivity {
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
         backButton.setVisibility(View.GONE);
+        manageProposalButtons.setVisibility(View.GONE);
 
         String otherUserName = isDriver ? proposal.getRiderName() : proposal.getDriverName();
 
@@ -300,6 +316,7 @@ public class LoadingActivity extends AppCompatActivity {
 
         dualButtonContainer.setVisibility(View.GONE);
         returnHomeButton.setVisibility(View.VISIBLE);
+        manageProposalButtons.setVisibility(View.GONE);
 
         if (isDriver) {
             subText.setText("Thank you for your service. Your points will be adjusted accordingly.");
@@ -371,6 +388,89 @@ public class LoadingActivity extends AppCompatActivity {
     interface UserDetailsCallback {
         void onDetailsFetched(String details);
     }
+
+    private void updateProposal() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Update Proposal");
+
+        // Create layout with text fields
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
+
+        // Input fields
+        final TextView startLabel = new TextView(this);
+        startLabel.setText("Start Location:");
+        final android.widget.EditText startInput = new android.widget.EditText(this);
+
+        final TextView endLabel = new TextView(this);
+        endLabel.setText("Destination:");
+        final android.widget.EditText endInput = new android.widget.EditText(this);
+
+        final TextView dateLabel = new TextView(this);
+        dateLabel.setText("Date (e.g., 2025-05-01):");
+        final android.widget.EditText dateInput = new android.widget.EditText(this);
+
+        final TextView timeLabel = new TextView(this);
+        timeLabel.setText("Time (e.g., 14:30):");
+        final android.widget.EditText timeInput = new android.widget.EditText(this);
+
+        layout.addView(startLabel);
+        layout.addView(startInput);
+        layout.addView(endLabel);
+        layout.addView(endInput);
+        layout.addView(dateLabel);
+        layout.addView(dateInput);
+        layout.addView(timeLabel);
+        layout.addView(timeInput);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String newStart = startInput.getText().toString().trim();
+            String newEnd = endInput.getText().toString().trim();
+            String newDate = dateInput.getText().toString().trim();
+            String newTime = timeInput.getText().toString().trim();
+
+            if (newStart.isEmpty() || newEnd.isEmpty() || newDate.isEmpty() || newTime.isEmpty()) {
+                Toast.makeText(this, "All fields must be filled", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("startLocation", newStart);
+            updates.put("endLocation", newEnd);
+            updates.put("date", newDate);
+            updates.put("time", newTime);
+
+            proposalRef.updateChildren(updates)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Proposal updated!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to update proposal", Toast.LENGTH_SHORT).show();
+                    });
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void deleteProposal() {
+        if (proposalRef != null) {
+            proposalRef.removeValue()
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(LoadingActivity.this, "Proposal deleted successfully", Toast.LENGTH_SHORT).show();
+                        navigateToHome();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(LoadingActivity.this, "Failed to delete proposal", Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
+
 
     private void acceptProposal() {
         String statusField = isDriver ? "driverStatus" : "riderStatus";
