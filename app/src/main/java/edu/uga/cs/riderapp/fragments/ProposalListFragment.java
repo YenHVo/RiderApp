@@ -213,15 +213,17 @@ public class ProposalListFragment extends Fragment {
                         String startLocation = proposalSnap.child("startLocation").getValue(String.class);
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                         String userId = proposalSnap.child("userId").getValue(String.class);
-                        Date dateTime = proposalSnap.child("dateTime").getValue(Date.class);
+
+                        // Correctly convert the timestamp to Date
+                        Long timestamp = proposalSnap.child("dateTime").getValue(Long.class);
+                        Date dateTime = (timestamp != null) ? new Date(timestamp) : new Date(0L);
 
                         Proposal proposal = new Proposal();
                         proposal.setProposalId(proposalId);
                         proposal.setType(type);
                         proposal.setStartLocation(startLocation);
                         proposal.setEndLocation(endLocation);
-                        proposal.setDateTime(dateTime != null ? dateTime : new Date(0L));
-
+                        proposal.setDateTime(dateTime);
 
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
@@ -252,6 +254,7 @@ public class ProposalListFragment extends Fragment {
                     }
                     adapter.notifyDataSetChanged();
                 }
+
 
                 @Override
                 public void onCancelled(DatabaseError error) {

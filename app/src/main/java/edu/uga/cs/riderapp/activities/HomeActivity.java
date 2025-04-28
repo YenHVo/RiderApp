@@ -108,6 +108,11 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+        // Add this listener for the new button
+        findViewById(R.id.viewAcceptedRidesBtn).setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, AcceptedRidesActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setupUserDataListener() {

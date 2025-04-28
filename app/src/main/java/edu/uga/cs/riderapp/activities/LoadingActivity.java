@@ -40,6 +40,7 @@ import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
+import edu.uga.cs.riderapp.models.Ride;
 import edu.uga.cs.riderapp.models.RideHistory;
 import edu.uga.cs.riderapp.models.User;
 
@@ -474,6 +475,8 @@ public class LoadingActivity extends AppCompatActivity {
 
     private void acceptProposal() {
         String statusField = isDriver ? "driverStatus" : "riderStatus";
+
+        // Update the status in Firebase
         proposalRef.child(statusField).setValue("accepted")
                 .addOnSuccessListener(aVoid -> {
                     // After accepting, check if both have accepted
@@ -483,16 +486,134 @@ public class LoadingActivity extends AppCompatActivity {
                             String driverStatus = snapshot.child("driverStatus").getValue(String.class);
                             String riderStatus = snapshot.child("riderStatus").getValue(String.class);
                             if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
+                                // Both the driver and the rider have accepted, show the accepted screen
                                 showAcceptedScreen(snapshot.getValue(Proposal.class));
+
+                                // Now you can add the ride to accepted rides for both rider and driver
+                                if (isDriver) {
+                                    acceptRideRequestAsDriver(snapshot); // Call this method to handle the driver's part
+                                } else {
+                                    acceptRideRequestAsRider(snapshot); // Call this method to handle the rider's part
+                                }
                             }
                         }
 
                         @Override
                         public void onCancelled(DatabaseError error) {
+                            // Handle potential errors
                         }
                     });
                 });
     }
+
+
+
+
+    private void acceptRideRequestAsRider(DataSnapshot snapshot) {
+        String riderEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        String proposalId = proposalRef.getKey();
+        String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users");
+
+
+        proposalRef.child("driverId").get().addOnSuccessListener(driverSnapshot -> {
+            String driverId = snapshot.getValue(String.class);  // Correct usage of getValue
+            Log.d("TAG", "Driver ID: " + driverId);
+
+
+            driverRef.child(driverId).child("email").get().addOnSuccessListener(driverEmailSnapshot -> {
+                String driverEmail = driverSnapshot.getValue(String.class);
+
+
+                proposalRef.child("status").setValue("accepted");
+
+
+                DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
+
+
+                Ride acceptedRide = new Ride();
+                acceptedRide.setProposalId(proposalId);
+                acceptedRide.setRiderId(riderId);
+                acceptedRide.setDriverEmail(driverEmail);
+                acceptedRide.setRiderEmail(riderEmail);
+
+
+                proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
+                    Long points = pointsSnapshot.getValue(Long.class);  // Correct usage of getValue
+                    acceptedRide.setPoints(points);
+
+
+                    acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
+                    acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
+
+
+                    Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
+                }).addOnFailureListener(e -> {
+                    Log.e("TAG", "Failed to fetch points", e);
+                });
+
+            }).addOnFailureListener(e -> {
+                Log.e("TAG", "Failed to fetch driver email", e);
+            });
+
+        }).addOnFailureListener(e -> {
+            Log.e("TAG", "Failed to fetch driverId", e);
+        });
+    }
+
+
+    private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
+        String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail(); // Driver email
+        String proposalId = proposalRef.getKey(); // Assuming proposalId is retrieved here
+        String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users");
+
+
+        proposalRef.child("riderId").get().addOnSuccessListener(riderSnapshot -> {
+            String riderId = snapshot.getValue(String.class);  // Correct usage of getValue
+            Log.d("TAG", "Rider ID: " + riderId);
+
+
+            riderRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
+                String riderEmail = riderSnapshot.getValue(String.class);
+
+
+                proposalRef.child("status").setValue("accepted");
+
+
+                DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
+
+
+                Ride acceptedRide = new Ride();
+                acceptedRide.setProposalId(proposalId);
+                acceptedRide.setRiderId(riderId);
+                acceptedRide.setDriverEmail(driverEmail);
+                acceptedRide.setRiderEmail(riderEmail);
+
+
+                proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
+                    Long points = pointsSnapshot.getValue(Long.class);  // Correct usage of getValue
+                    acceptedRide.setPoints(points);
+
+
+                    acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
+                    acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
+
+
+                    Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
+                }).addOnFailureListener(e -> {
+                    Log.e("TAG", "Failed to fetch points", e);
+                });
+
+            }).addOnFailureListener(e -> {
+                Log.e("TAG", "Failed to fetch rider email", e);
+            });
+
+        }).addOnFailureListener(e -> {
+            Log.e("TAG", "Failed to fetch riderId", e);
+        });
+    }
+
 
     private void rejectProposal() {
         // Reset both statuses to pending
