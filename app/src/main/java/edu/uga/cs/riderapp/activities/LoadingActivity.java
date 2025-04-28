@@ -522,14 +522,20 @@ public class LoadingActivity extends AppCompatActivity {
         String riderEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
         String riderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users");
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
+        // First check: driverId must be present
         proposalRef.child("driverId").get().addOnSuccessListener(driverSnapshot -> {
-            String driverId = snapshot.getValue(String.class);  // Correct usage of getValue
-            Log.d("TAG", "Driver ID: " + driverId);
+            String driverId = driverSnapshot.getValue(String.class);
+            if (driverId == null) {
+                Log.e("acceptRideRequestAsRider", "Missing driverId for offer proposal.");
+                Toast.makeText(this, "This offer is invalid (missing driver).", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            driverRef.child(driverId).child("email").get().addOnSuccessListener(driverEmailSnapshot -> {
-                String driverEmail = driverSnapshot.getValue(String.class);
+            usersRef.child(driverId).child("email").get().addOnSuccessListener(driverEmailSnapshot -> {
+                String driverEmail = driverEmailSnapshot.getValue(String.class);
+                if (driverEmail == null) driverEmail = "Unknown";
 
                 proposalRef.child("status").setValue("accepted");
 
@@ -543,29 +549,19 @@ public class LoadingActivity extends AppCompatActivity {
 
                 proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
                     Long points = pointsSnapshot.getValue(Long.class);
-                    acceptedRide.setPoints(points);
+                    acceptedRide.setPoints(points != null ? points : 0);
 
                     proposalRef.child("dateTime").get().addOnSuccessListener(dateSnapshot -> {
                         Long dateTime = dateSnapshot.getValue(Long.class);
-                        acceptedRide.setDateTime(dateTime);
+                        acceptedRide.setDateTime(dateTime != null ? dateTime : System.currentTimeMillis());
 
+                        // Save to accepted_rides
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
-                        driverRef.child(riderId).child("points").get().addOnSuccessListener(riderPointsSnapshot -> {
-                            Long currentPoints = riderPointsSnapshot.getValue(Long.class);
-                            if (currentPoints == null) currentPoints = 0L;
-                            Long updatedPoints = currentPoints + points;
-                            driverRef.child(riderId).child("points").setValue(updatedPoints); // Update rider points
-                        });
+                        // Update points for rider and driver
+                        updatePointsAfterRide(driverId, riderId);
 
-                        // Update driver points
-                        driverRef.child(driverId).child("points").get().addOnSuccessListener(driverPointsSnapshot -> {
-                            Long currentDriverPoints = driverPointsSnapshot.getValue(Long.class);
-                            if (currentDriverPoints == null) currentDriverPoints = 0L;
-                            Long updatedDriverPoints = currentDriverPoints + points;
-                            driverRef.child(driverId).child("points").setValue(updatedDriverPoints); // Update driver points
-                        });
 
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
@@ -585,18 +581,26 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
+
     private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
         String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users");  // Correct reference to "users"
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
+
+        // First check: riderId must be present
         proposalRef.child("riderId").get().addOnSuccessListener(riderSnapshot -> {
-            String riderId = riderSnapshot.getValue(String.class);  // Corrected to use riderSnapshot
-            Log.d("TAG", "Rider ID: " + riderId);
+            String riderId = riderSnapshot.getValue(String.class);
+            if (riderId == null) {
+                Log.e("acceptRideRequestAsDriver", "Missing riderId for request proposal.");
+                Toast.makeText(this, "This request is invalid (missing rider).", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            driverRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
-                String riderEmail = riderEmailSnapshot.getValue(String.class);  // Corrected to use riderEmailSnapshot
+            usersRef.child(riderId).child("email").get().addOnSuccessListener(riderEmailSnapshot -> {
+                String riderEmail = riderEmailSnapshot.getValue(String.class);
+                if (riderEmail == null) riderEmail = "Unknown";
 
                 proposalRef.child("status").setValue("accepted");
 
@@ -610,30 +614,19 @@ public class LoadingActivity extends AppCompatActivity {
 
                 proposalRef.child("points").get().addOnSuccessListener(pointsSnapshot -> {
                     Long points = pointsSnapshot.getValue(Long.class);
-                    acceptedRide.setPoints(points);
+                    acceptedRide.setPoints(points != null ? points : 0);
 
                     proposalRef.child("dateTime").get().addOnSuccessListener(dateSnapshot -> {
                         Long dateTime = dateSnapshot.getValue(Long.class);
-                        acceptedRide.setDateTime(dateTime);
+                        acceptedRide.setDateTime(dateTime != null ? dateTime : System.currentTimeMillis());
 
+                        // Save to accepted_rides
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
-                        // Update rider points
-                        driverRef.child(riderId).child("points").get().addOnSuccessListener(riderPointsSnapshot -> {
-                            Long currentPoints = riderPointsSnapshot.getValue(Long.class);
-                            if (currentPoints == null) currentPoints = 0L;
-                            Long updatedPoints = currentPoints + points;
-                            driverRef.child(riderId).child("points").setValue(updatedPoints);  // Update rider points
-                        });
+                        // Update points for rider and driver
+                        updatePointsAfterRide(driverId, riderId);
 
-                        // Update driver points
-                        driverRef.child(driverId).child("points").get().addOnSuccessListener(driverPointsSnapshot -> {
-                            Long currentDriverPoints = driverPointsSnapshot.getValue(Long.class);
-                            if (currentDriverPoints == null) currentDriverPoints = 0L;
-                            Long updatedDriverPoints = currentDriverPoints + points;
-                            driverRef.child(driverId).child("points").setValue(updatedDriverPoints);  // Update driver points
-                        });
 
                         Toast.makeText(this, "Ride request accepted successfully", Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
