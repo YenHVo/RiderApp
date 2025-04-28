@@ -2,6 +2,7 @@ package edu.uga.cs.riderapp.activities;
 
 
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -493,6 +494,7 @@ public class LoadingActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch rider points: " + e.getMessage()));
     }*/
 
+    /*
     public void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
         DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
@@ -546,8 +548,81 @@ public class LoadingActivity extends AppCompatActivity {
 
         // Navigate to home after updates
         navigateToHome();
+    }*/
+
+    public void updatePointsAfterRide(String driverId, String riderId) {
+        // Show loading indicator
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Updating points...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
+        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
+
+        // 1. First update driver points
+        driverRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Long points = mutableData.getValue(Long.class);
+                if (points == null) {
+                    mutableData.setValue(100L);
+                } else {
+                    mutableData.setValue(points + 100);
+                }
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (!committed) {
+                    Log.e("LoadingActivity", "Driver points update failed: " +
+                            (databaseError != null ? databaseError.getMessage() : "Unknown error"));
+                }
+
+                // 2. After driver update completes (success or fail), update rider points
+                riderRef.runTransaction(new Transaction.Handler() {
+                    @Override
+                    public Transaction.Result doTransaction(MutableData mutableData) {
+                        Long points = mutableData.getValue(Long.class);
+                        if (points == null) {
+                            mutableData.setValue(0L);
+                        } else {
+                            long newPoints = points - 100;
+                            mutableData.setValue(Math.max(newPoints, 0));
+                        }
+                        return Transaction.success(mutableData);
+                    }
+
+                    @Override
+                    public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                        progressDialog.dismiss();
+
+                        if (!committed) {
+                            Log.e("LoadingActivity", "Rider points update failed: " +
+                                    (databaseError != null ? databaseError.getMessage() : "Unknown error"));
+                            Toast.makeText(LoadingActivity.this,
+                                    "Points update had issues", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoadingActivity.this,
+                                    "Ride completed!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        navigateToHome();
+                    }
+                });
+            }
+        });
     }
 
+    private void navigateToHome() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    /*
     private void navigateToHome() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(this, HomeActivity.class);
@@ -555,6 +630,6 @@ public class LoadingActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }, 1000); // 1 second delay
-    }
+    }*/
 
 }

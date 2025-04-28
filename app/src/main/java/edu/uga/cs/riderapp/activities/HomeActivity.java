@@ -173,13 +173,14 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    /*
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (userRef != null && userListener != null) {
             userRef.removeEventListener(userListener);
         }
-    }
+    }*/
 
     @Override
     protected void onStart() {
