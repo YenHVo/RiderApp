@@ -348,10 +348,15 @@ public class ProposalListFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (proposalRef != null && proposalListener != null) {
-            proposalRef.removeEventListener(proposalListener);
+        if (proposalsRef != null && proposalsListener != null) {
+            proposalsRef.removeEventListener(proposalsListener);
+            proposalsListener = null;
         }
+        proposals.clear();
+        adapter.notifyDataSetChanged();
     }
+
+
 
 
 }
