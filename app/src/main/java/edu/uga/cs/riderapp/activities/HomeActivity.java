@@ -134,6 +134,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }*/
 
+    /*
     private void getCurrentUserFromFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -157,6 +158,39 @@ public class HomeActivity extends AppCompatActivity {
                 }
             };
             userRef.addValueEventListener(userListener);
+        } else {
+            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(HomeActivity.this, MainActivity.class));
+            finish();
+        }
+    }*/
+    private void getCurrentUserFromFirebase() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String currentUserId = currentUser.getUid();
+            userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
+
+            // Use addValueEventListener instead of addListenerForSingleValueEvent
+            // to get real-time updates
+            userListener = userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        user = snapshot.getValue(User.class);
+                        if (user != null) {
+                            // Force update the UI on the main thread
+                            runOnUiThread(() -> updateUserInfo());
+                        }
+                    } else {
+                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
             Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(HomeActivity.this, MainActivity.class));

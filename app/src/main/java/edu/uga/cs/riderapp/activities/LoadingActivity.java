@@ -553,25 +553,26 @@ public class LoadingActivity extends AppCompatActivity {
     }*/
 
     public void updatePointsAfterRide(String driverId, String riderId) {
-
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Updating points...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
-        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId);
+        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId);
 
-
+        // Update driver points
         driverRef.runTransaction(new Transaction.Handler() {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
-                Long points = mutableData.getValue(Long.class);
-                if (points == null) {
-                    mutableData.setValue(100L);
+                User user = mutableData.getValue(User.class);
+                if (user == null) {
+                    user = new User();
+                    user.setPoints(100L);
                 } else {
-                    mutableData.setValue(points + 100);
+                    user.setPoints(user.getPoints() + 100);
                 }
+                mutableData.setValue(user);
                 return Transaction.success(mutableData);
             }
 
@@ -582,17 +583,19 @@ public class LoadingActivity extends AppCompatActivity {
                             (databaseError != null ? databaseError.getMessage() : "Unknown error"));
                 }
 
-
+                // Update rider points only after driver points are updated
                 riderRef.runTransaction(new Transaction.Handler() {
                     @Override
                     public Transaction.Result doTransaction(MutableData mutableData) {
-                        Long points = mutableData.getValue(Long.class);
-                        if (points == null) {
-                            mutableData.setValue(0L);
+                        User user = mutableData.getValue(User.class);
+                        if (user == null) {
+                            user = new User();
+                            user.setPoints(0L);
                         } else {
-                            long newPoints = points - 100;
-                            mutableData.setValue(Math.max(newPoints, 0));
+                            long newPoints = user.getPoints() - 100;
+                            user.setPoints(Math.max(newPoints, 0));
                         }
+                        mutableData.setValue(user);
                         return Transaction.success(mutableData);
                     }
 
@@ -600,23 +603,21 @@ public class LoadingActivity extends AppCompatActivity {
                     public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
                         progressDialog.dismiss();
 
-                        if (!committed) {
-                            Log.e("LoadingActivity", "Rider points update failed: " +
-                                    (databaseError != null ? databaseError.getMessage() : "Unknown error"));
-                            Toast.makeText(LoadingActivity.this,
-                                    "Points update had issues", Toast.LENGTH_SHORT).show();
+                        if (committed) {
+                            // Add a small delay to ensure Firebase has propagated the changes
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                navigateToHome();
+                            }, 500);
                         } else {
                             Toast.makeText(LoadingActivity.this,
-                                    "Ride completed!", Toast.LENGTH_SHORT).show();
+                                    "Points update had issues", Toast.LENGTH_SHORT).show();
+                            navigateToHome();
                         }
-
-                        navigateToHome();
                     }
                 });
             }
         });
     }
-
 
     // private void navigateToHome() {
     //   Intent intent = new Intent(this, HomeActivity.class);
