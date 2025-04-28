@@ -488,7 +488,7 @@ public class LoadingActivity extends AppCompatActivity {
                         Long dateTime = dateSnapshot.getValue(Long.class);
                         acceptedRide.setDateTime(dateTime != null ? dateTime : System.currentTimeMillis());
 
-                        // Save to accepted_rides
+                        // Save to accepted_rides for both rider and driver
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
@@ -512,7 +512,6 @@ public class LoadingActivity extends AppCompatActivity {
             Log.e("TAG", "Failed to fetch driverId", e);
         });
     }
-
     private void acceptRideRequestAsDriver(DataSnapshot snapshot) {
         String driverEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         String proposalId = proposalRef.getKey();
@@ -550,7 +549,7 @@ public class LoadingActivity extends AppCompatActivity {
                         Long dateTime = dateSnapshot.getValue(Long.class);
                         acceptedRide.setDateTime(dateTime != null ? dateTime : System.currentTimeMillis());
 
-                        // Save to accepted_rides
+                        // Save to accepted_rides for both rider and driver
                         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
                         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
 
@@ -611,6 +610,7 @@ public class LoadingActivity extends AppCompatActivity {
 
 
                         saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
+                        removeRideFromAcceptedRides(driverId, riderId);
                     }).addOnFailureListener(e -> {
                         Toast.makeText(LoadingActivity.this, "Failed to fetch rider ID", Toast.LENGTH_SHORT).show();
                         Log.e("markRideCompleted", "Failed to fetch rider ID", e);
@@ -686,7 +686,7 @@ public class LoadingActivity extends AppCompatActivity {
     private void removeRideFromAcceptedRides(String driverId, String riderId) {
         DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
 
-        // Remove the ride for both the driver and rider
+
         acceptedRidesRef.child(driverId).child(proposalRef.getKey()).removeValue();
         acceptedRidesRef.child(riderId).child(proposalRef.getKey()).removeValue();
     }
