@@ -593,11 +593,35 @@ public class LoadingActivity extends AppCompatActivity {
         proposalRef.child(statusField).setValue("completed")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(LoadingActivity.this, "Marked as completed! Waiting for other user.", Toast.LENGTH_SHORT).show();
+                    String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    DatabaseReference riderRef = proposalRef.child("riderId");
+                    DatabaseReference driverRef = proposalRef.child("driverId");
+
+
+                    riderRef.get().addOnSuccessListener(riderSnapshot -> {
+                        String riderId = riderSnapshot.getValue(String.class);
+                        if (riderId == null) {
+                            Log.e("markRideCompleted", "Rider ID is missing.");
+                            return;
+                        }
+
+                        String startLocation = "Start Location";
+                        String endLocation = "End Location";
+                        long dateTime = System.currentTimeMillis();
+
+
+                        saveRideToHistory(driverId, riderId, startLocation, endLocation, dateTime);
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(LoadingActivity.this, "Failed to fetch rider ID", Toast.LENGTH_SHORT).show();
+                        Log.e("markRideCompleted", "Failed to fetch rider ID", e);
+                    });
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(LoadingActivity.this, "Failed to mark as completed", Toast.LENGTH_SHORT).show();
+                    Log.e("markRideCompleted", "Failed to update status", e);
                 });
     }
+
 
     private void cancelProposal() {
         if (proposalRef != null) {
@@ -622,12 +646,18 @@ public class LoadingActivity extends AppCompatActivity {
 
         // Save the ride history to Firebase for both the driver and rider
         DatabaseReference rideHistoryRef = FirebaseDatabase.getInstance().getReference("ride_history");
+
+        // Generate a unique ID for the ride history entry
         String rideHistoryId = rideHistoryRef.push().getKey();
         if (rideHistoryId != null) {
+            // Save the ride history for both the driver and rider under their respective IDs
             rideHistoryRef.child(driverId).child(rideHistoryId).setValue(rideHistory);
             rideHistoryRef.child(riderId).child(rideHistoryId).setValue(rideHistory);
+        } else {
+            Log.e("saveRideToHistory", "Failed to generate a unique ID for ride history");
         }
     }
+
 
     private void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
