@@ -130,7 +130,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
 
-        private void setupUserDataListener() {
+    private void setupUserDataListener() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             startActivity(new Intent(this, MainActivity.class));
@@ -138,33 +138,43 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
-        // Remove previous listener if exists
+        // Remove any existing listener if it exists
         if (userRef != null && userListener != null) {
             userRef.removeEventListener(userListener);
         }
 
+        // Get the reference to the user's data in Firebase
         userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
 
+        // Set up the listener for user data
         userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
+                    // Get the User object from the snapshot
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
+                        // Update the UI with the latest points and other data
                         updateUI(user);
                         Log.d("HomeActivity", "User data updated - Points: " + user.getPoints());
                     }
+                } else {
+                    Log.w("HomeActivity", "User data does not exist in the database.");
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Log.e("HomeActivity", "Failed to load user data", error.toException());
+                Toast.makeText(HomeActivity.this, "Failed to load user data.", Toast.LENGTH_SHORT).show();
             }
         };
 
+        // Add the ValueEventListener to fetch data from Firebase
         userRef.addValueEventListener(userListener);
     }
+
+
 
     private void updateUI(User user) {
         if (user != null) {

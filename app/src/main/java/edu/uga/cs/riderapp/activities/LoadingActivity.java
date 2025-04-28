@@ -26,6 +26,8 @@ import android.widget.Toast;
 import edu.uga.cs.riderapp.activities.HomeActivity;
 
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -874,59 +876,45 @@ public class LoadingActivity extends AppCompatActivity {
         DatabaseReference driverRef = usersRef.child(driverId);
         DatabaseReference riderRef = usersRef.child(riderId);
 
-        // First get current points for both users
-        driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot driverSnapshot) {
-                User driver = driverSnapshot.getValue(User.class);
-                if (driver == null) {
-                    Log.e("LoadingActivity", "Driver data not found");
-                    navigateToHome();
-                    return;
-                }
+        // Use Task API to fetch both driver and rider data in parallel
+        Task<DataSnapshot> driverTask = driverRef.get();
+        Task<DataSnapshot> riderTask = riderRef.get();
 
-                riderRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot riderSnapshot) {
-                        User rider = riderSnapshot.getValue(User.class);
-                        if (rider == null) {
-                            Log.e("LoadingActivity", "Rider data not found");
-                            navigateToHome();
-                            return;
-                        }
+        Tasks.whenAllSuccess(driverTask, riderTask).addOnSuccessListener(tasks -> {
+            // Ensure both tasks were successful
+            DataSnapshot driverSnapshot = (DataSnapshot) tasks.get(0);
+            DataSnapshot riderSnapshot = (DataSnapshot) tasks.get(1);
 
+            User driver = driverSnapshot.getValue(User.class);
+            User rider = riderSnapshot.getValue(User.class);
 
-                        long newDriverPoints = driver.getPoints() + 100;
-                        long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
-
-                        // Perform an atomic update of both users' points
-                        Map<String, Object> updates = new HashMap<>();
-                        updates.put(driverId + "/points", newDriverPoints);
-                        updates.put(riderId + "/points", newRiderPoints);
-
-                        // Update points in the database
-                        usersRef.updateChildren(updates)
-                                .addOnSuccessListener(aVoid -> {
-                                    Log.d("LoadingActivity", "Points updated successfully");
-                                    navigateToHome();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e("LoadingActivity", "Failed to update points", e);
-                                    navigateToHome();
-                                });
-                    }
-
-                    public void onCancelled(DatabaseError error) {
-                        Log.e("LoadingActivity", "Failed to read rider data", error.toException());
-                        navigateToHome();
-                    }
-                });
-            }
-
-            public void onCancelled(DatabaseError error) {
-                Log.e("LoadingActivity", "Failed to read driver data", error.toException());
+            if (driver == null || rider == null) {
+                Log.e("LoadingActivity", "Driver or Rider data not found");
                 navigateToHome();
+                return;
             }
+
+            long newDriverPoints = driver.getPoints() + 100;
+            long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
+
+            // Perform atomic update for both users' points
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(driverId + "/points", newDriverPoints);
+            updates.put(riderId + "/points", newRiderPoints);
+
+            // Update points in the database
+            usersRef.updateChildren(updates)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("LoadingActivity", "Points updated successfully");
+                        navigateToHome();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("LoadingActivity", "Failed to update points", e);
+                        navigateToHome();
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e("LoadingActivity", "Failed to retrieve data", e);
+            navigateToHome();
         });
     }
 
