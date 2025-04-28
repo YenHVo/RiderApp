@@ -103,11 +103,8 @@ public class ProposalListFragment extends Fragment {
             }*/
 
                 boolean isDriver = "request".equals(proposal.getType());
-                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
-                        .getReference("proposals")
-                        .child(proposal.getProposalId());
 
-                // Get current user's name from Firebase Auth
+                // Get current user's ID and name
                 FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
                 String currentUserName = currentFirebaseUser != null ?
                         (currentFirebaseUser.getDisplayName() != null ?
@@ -117,20 +114,38 @@ public class ProposalListFragment extends Fragment {
                         "User";
 
                 if (isDriver) {
-                    proposalRef.child("driverStatus").setValue("accepted");
-                    proposalRef.child("driverId").setValue(currentUserId);
-                    proposalRef.child("driverName").setValue(currentUserName);  // Add this line
+                    // Driver accepting a rider's request
+                    proposal.setDriverId(currentUserId);
+                    proposal.setDriverName(currentUserName);
+                    proposal.setDriverStatus("accepted");
+
+                    // Car model and seats were filled in ProposalRecyclerViewAdapter
+                    // and saved into the Proposal object already there!
                 } else {
-                    proposalRef.child("riderStatus").setValue("accepted");
-                    proposalRef.child("riderId").setValue(currentUserId);
-                    proposalRef.child("riderName").setValue(currentUserName);  // Add this line
+                    // Rider accepting a driver's offer
+                    proposal.setRiderId(currentUserId);
+                    proposal.setRiderName(currentUserName);
+                    proposal.setRiderStatus("accepted");
+                    // Rider doesn't modify car info
                 }
 
-                checkBothUsersConfirmed(proposal);
-                Intent intent = new Intent(getActivity(), LoadingActivity.class);
-                intent.putExtra("proposalId", proposal.getProposalId());
-                intent.putExtra("isDriver", isDriver);
-                startActivity(intent);
+                // Save the updated proposal to Firebase
+                DatabaseReference proposalRef = FirebaseDatabase.getInstance()
+                        .getReference("proposals")
+                        .child(proposal.getProposalId());
+
+                proposalRef.setValue(proposal)
+                        .addOnSuccessListener(aVoid -> {
+                            checkBothUsersConfirmed(proposal);
+
+                            Intent intent = new Intent(getActivity(), LoadingActivity.class);
+                            intent.putExtra("proposalId", proposal.getProposalId());
+                            intent.putExtra("isDriver", isDriver);
+                            startActivity(intent);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(getContext(), "Failed to update proposal.", Toast.LENGTH_SHORT).show();
+                        });
             }
 
             public void onCancelClick(Proposal proposal, View actionButtonsLayout) {
