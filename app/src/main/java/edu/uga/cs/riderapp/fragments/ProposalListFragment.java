@@ -24,6 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import edu.uga.cs.riderapp.R;
@@ -212,12 +213,14 @@ public class ProposalListFragment extends Fragment {
                         String startLocation = proposalSnap.child("startLocation").getValue(String.class);
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                         String userId = proposalSnap.child("userId").getValue(String.class);
+                        Date dateTime = proposalSnap.child("dateTime").getValue(Date.class);
 
                         Proposal proposal = new Proposal();
                         proposal.setProposalId(proposalId);
                         proposal.setType(type);
                         proposal.setStartLocation(startLocation);
                         proposal.setEndLocation(endLocation);
+                        proposal.setDateTime(dateTime != null ? dateTime : 0L);
 
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
@@ -240,6 +243,11 @@ public class ProposalListFragment extends Fragment {
                                 Log.e("ProposalListFragment", "Proposal missing userId: " + proposal.getProposalId());
                             }
                         }
+                    }
+                    if (proposals != null && !proposals.isEmpty()) {
+                        proposals.sort((p1, p2) -> p1.getDateTime().compareTo(p2.getDateTime()));
+                    } else {
+                        Log.d("ProposalListFragment", "Proposals list is empty or null");
                     }
                     adapter.notifyDataSetChanged();
                 }
