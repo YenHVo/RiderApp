@@ -1,5 +1,7 @@
 package edu.uga.cs.riderapp.fragments;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -10,9 +12,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import edu.uga.cs.riderapp.R;
@@ -30,7 +35,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 
 /**
@@ -47,6 +55,12 @@ public class CreateProposalFragment extends Fragment {
     private EditText availableSeatsEdit;
     private LinearLayout carDetailsLayout;
     private Button submitButton;
+
+    private Button selectDateButton;
+    private Button selectTimeButton;
+    private TextView dateTimeDisplay;
+    private Calendar selectedDateTime;
+
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -103,6 +117,16 @@ public class CreateProposalFragment extends Fragment {
         carDetailsLayout = view.findViewById(R.id.carDetailsLayout);
         submitButton = view.findViewById(R.id.submitButton);
 
+        selectDateButton = view.findViewById(R.id.selectDateButton);
+        selectTimeButton = view.findViewById(R.id.selectTimeButton);
+        dateTimeDisplay = view.findViewById(R.id.dateTimeDisplay);
+
+        selectedDateTime = Calendar.getInstance();  // Initialize
+
+        selectDateButton.setOnClickListener(v -> showDatePickerDialog());
+        selectTimeButton.setOnClickListener(v -> showTimePickerDialog());
+
+
         // Handle proposal type change
         proposalTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.offerRadio) {
@@ -131,6 +155,8 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
+        long dateTimeMillis = selectedDateTime.getTimeInMillis();
+
 
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
@@ -156,7 +182,8 @@ public class CreateProposalFragment extends Fragment {
                             null,
                             currentUser.getUserId(), // riderId
                             null,
-                            0
+                            0,
+                            new Date(dateTimeMillis)
                     );
                     saveProposal(proposal, isOffer);
 
@@ -202,7 +229,8 @@ public class CreateProposalFragment extends Fragment {
                     currentUser.getUserId(),
                     null,
                     carModel,
-                    availableSeats
+                    availableSeats,
+                    new Date(dateTimeMillis)
             );
             saveProposal(proposal, isOffer);
 
@@ -211,6 +239,42 @@ public class CreateProposalFragment extends Fragment {
         }
     }
 
+    private void showDatePickerDialog() {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                getContext(),
+                (view, year, month, dayOfMonth) -> {
+                    selectedDateTime.set(Calendar.YEAR, year);
+                    selectedDateTime.set(Calendar.MONTH, month);
+                    selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    updateDateTimeDisplay();
+                },
+                selectedDateTime.get(Calendar.YEAR),
+                selectedDateTime.get(Calendar.MONTH),
+                selectedDateTime.get(Calendar.DAY_OF_MONTH)
+        );
+        datePickerDialog.show();
+    }
+
+    private void showTimePickerDialog() {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                getContext(),
+                (view, hourOfDay, minute) -> {
+                    selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    selectedDateTime.set(Calendar.MINUTE, minute);
+                    updateDateTimeDisplay();
+                },
+                selectedDateTime.get(Calendar.HOUR_OF_DAY),
+                selectedDateTime.get(Calendar.MINUTE),
+                true
+        );
+        timePickerDialog.show();
+    }
+
+    private void updateDateTimeDisplay() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String formatted = sdf.format(selectedDateTime.getTime());
+        dateTimeDisplay.setText(formatted);
+    }
 
     private User getCurrentUser() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
