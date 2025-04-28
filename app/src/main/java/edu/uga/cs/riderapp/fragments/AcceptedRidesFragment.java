@@ -1,13 +1,14 @@
-package edu.uga.cs.riderapp.activities;
+package edu.uga.cs.riderapp.fragments;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
-import androidx.recyclerview.widget.RecyclerView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -18,27 +19,28 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import edu.uga.cs.riderapp.R;
-import edu.uga.cs.riderapp.fragments.AcceptedRidesAdapter;
 import edu.uga.cs.riderapp.models.Ride;
 
-
-public class AcceptedRidesActivity extends AppCompatActivity {
+public class AcceptedRidesFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private AcceptedRidesAdapter adapter;
     private List<Ride> acceptedRidesList;
-
     private DatabaseReference acceptedRidesRef;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_accepted_rides);
+    public AcceptedRidesFragment() {
+        // Required empty public constructor
+    }
 
-        recyclerView = findViewById(R.id.recycler_view_accepted_rides);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_accepted_rides, container, false);
+
+        recyclerView = view.findViewById(R.id.recycler_view_accepted_rides);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         acceptedRidesList = new ArrayList<>();
         adapter = new AcceptedRidesAdapter(acceptedRidesList);
@@ -47,6 +49,8 @@ public class AcceptedRidesActivity extends AppCompatActivity {
         acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
 
         loadAcceptedRides();
+
+        return view;
     }
 
     private void loadAcceptedRides() {
@@ -66,7 +70,7 @@ public class AcceptedRidesActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(AcceptedRidesActivity.this, "Failed to load accepted rides", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed to load accepted rides", Toast.LENGTH_SHORT).show();
             }
         });
     }

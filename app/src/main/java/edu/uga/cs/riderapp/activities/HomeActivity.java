@@ -12,11 +12,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import edu.uga.cs.riderapp.R;
+import edu.uga.cs.riderapp.fragments.AcceptedRidesFragment;
 import edu.uga.cs.riderapp.fragments.CreateProposalFragment;
 import edu.uga.cs.riderapp.fragments.ProfileFragment;
 import edu.uga.cs.riderapp.fragments.ProposalListFragment;
@@ -108,14 +110,27 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-        // Add this listener for the new button
+
         findViewById(R.id.viewAcceptedRidesBtn).setOnClickListener(v -> {
-            Intent intent = new Intent(HomeActivity.this, AcceptedRidesActivity.class);
-            startActivity(intent);
+
+            AcceptedRidesFragment fragment = new AcceptedRidesFragment();
+
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+
+            transaction.replace(R.id.fragmentContainer, fragment);
+
+
+            transaction.addToBackStack(null);
+
+
+            transaction.commit();
         });
     }
 
-    private void setupUserDataListener() {
+
+        private void setupUserDataListener() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             startActivity(new Intent(this, MainActivity.class));
