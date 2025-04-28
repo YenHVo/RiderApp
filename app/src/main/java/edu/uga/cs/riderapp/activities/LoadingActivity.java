@@ -629,7 +629,7 @@ public class LoadingActivity extends AppCompatActivity {
     private void navigateToHome() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(this, HomeActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
         }, 1000); // 1 second delay
