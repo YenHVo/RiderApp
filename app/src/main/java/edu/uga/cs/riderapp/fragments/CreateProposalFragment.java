@@ -155,7 +155,18 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (selectedDateTime == null) {
+            Toast.makeText(getContext(), "Please select a valid date and time", Toast.LENGTH_SHORT).show();
+            return;
+        }
         long dateTimeMillis = selectedDateTime.getTimeInMillis();
+
+        int checkedRadioButtonId = proposalTypeGroup.getCheckedRadioButtonId();
+        if (checkedRadioButtonId == -1) {
+            Toast.makeText(getContext(), "Please select a proposal type (offer or request)", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
