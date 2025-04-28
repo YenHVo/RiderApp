@@ -33,11 +33,12 @@ public class Proposal {
 
 
     public Proposal(String type, String startLocation, String endLocation,
-                    String driverId, String car, int availableSeats) {
+                    String driverId, String riderId,String car, int availableSeats) {
         this.type = type;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
         this.driverId = driverId;
+        this.riderId = riderId;
         this.car = car;
         this.availableSeats = availableSeats;
         this.createdAt = new Date();

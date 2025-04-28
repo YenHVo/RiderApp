@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -134,6 +135,7 @@ public class CreateProposalFragment extends Fragment {
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
 
         if (!isOffer) {
+
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUserId()).child("points");
 
             userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -141,17 +143,25 @@ public class CreateProposalFragment extends Fragment {
                 public void onDataChange(DataSnapshot snapshot) {
                     Long points = snapshot.getValue(Long.class);
                     if (points == null || points < 100) {
+                        Log.e("LoadingActivity", "Not enough points. User points: " + points);
                         Toast.makeText(getContext(), "Not enough points. Give a ride to get more.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
+                    // Create the proposal (rider)
                     Proposal proposal = new Proposal(
                             "request",
                             startLocation,
                             endLocation,
-                            currentUser.getUserId()
+                            null,
+                            currentUser.getUserId(), // riderId
+                            null,
+                            0
                     );
                     saveProposal(proposal, isOffer);
+
+
+
                     Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
                     clearForm();
                 }
@@ -164,7 +174,7 @@ public class CreateProposalFragment extends Fragment {
                 }
             });
         } else {
-            // Handling ride offer creation
+            // Handling ride offer creation (driver)
             String carModel = carModelEdit.getText().toString().trim();
             String seatsStr = availableSeatsEdit.getText().toString().trim();
 
@@ -184,20 +194,23 @@ public class CreateProposalFragment extends Fragment {
                 return;
             }
 
-            // Proceed with creating the ride offer
+            // Create the proposal (driver)
             Proposal proposal = new Proposal(
                     "offer",
                     startLocation,
                     endLocation,
                     currentUser.getUserId(),
+                    null,
                     carModel,
                     availableSeats
             );
             saveProposal(proposal, isOffer);
+
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
             clearForm();
         }
     }
+
 
     private User getCurrentUser() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
