@@ -94,6 +94,8 @@ public class LoadingActivity extends AppCompatActivity {
         initializeViews();
         setupButtonListeners();
         setupDatabaseListener();
+
+        listenToFinalStatus();
     }
 
     private void initializeViews() {
@@ -436,8 +438,33 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+        private void listenToFinalStatus() {
+            DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference()
+                    .child("accepted_rides")
+                    .child(proposalId);
+
+            proposalRef.child("finalStatus").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    String finalStatus = snapshot.getValue(String.class);
+                    if (finalStatus == null) return;
+
+                    if ("accepted".equals(finalStatus)) {
+                        navigateToHome();
+                    } else if ("past".equals(finalStatus)) {
+                        navigateToLoadingActivity();
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.e("listenToFinalStatus", "Failed to listen to finalStatus: " + error.getMessage());
+                }
+            });
+        }
+
+
     private void checkRideDateAndMove(DataSnapshot snapshot) {
-        // Get the ride's dateTime
         Long dateTimeMillis = snapshot.child("dateTime").getValue(Long.class);
         if (dateTimeMillis == null) {
             Log.e("checkRideDateAndMove", "DateTime is missing.");
@@ -446,15 +473,28 @@ public class LoadingActivity extends AppCompatActivity {
 
         long currentTimeMillis = System.currentTimeMillis();
 
-        // Check if the ride is in the future or now
         if (dateTimeMillis > currentTimeMillis) {
-            // Ride is in the future, move to accepted_rides
-            moveRideToAccepted(snapshot);
+            // Future ride: set finalStatus to "accepted"
+            proposalRef.child("finalStatus").setValue("accepted")
+                    .addOnSuccessListener(aVoid -> {
+                        moveRideToAccepted(snapshot);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("checkRideDateAndMove", "Failed to set finalStatus to accepted.", e);
+                    });
         } else {
-            // Ride is now or in the past, go to the loading activity
-            navigateToLoadingActivity();
+            // Past or now ride: set finalStatus to "past"
+            proposalRef.child("finalStatus").setValue("past")
+                    .addOnSuccessListener(aVoid -> {
+                        navigateToLoadingActivity();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("checkRideDateAndMove", "Failed to set finalStatus to past.", e);
+                    });
         }
     }
+
+
 
     private void moveRideToAccepted(DataSnapshot snapshot) {
         String proposalId = proposalRef.getKey();
@@ -496,6 +536,13 @@ public class LoadingActivity extends AppCompatActivity {
 
 
 
+    private void setFinalStatusToPast() {
+        proposalRef.child("finalStatus").setValue("past").addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                navigateToLoadingActivity();
+            }
+        });
+    }
 
 
     private void rejectProposal() {
