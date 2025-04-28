@@ -341,5 +341,18 @@ public class ProposalListFragment extends Fragment {
         });
     }
 
+    private DatabaseReference proposalRef;
+    private ValueEventListener proposalListener;
+
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (proposalRef != null && proposalListener != null) {
+            proposalRef.removeEventListener(proposalListener);
+        }
+    }
+
+
 }
 
