@@ -24,6 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -47,6 +48,8 @@ public class ProposalListFragment extends Fragment {
 
     private DatabaseReference proposalsRef;
     private ValueEventListener proposalsListener;
+    private Calendar selectedDateTime = Calendar.getInstance();
+
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -212,24 +215,28 @@ public class ProposalListFragment extends Fragment {
                         String endLocation = proposalSnap.child("endLocation").getValue(String.class);
                         String userId = proposalSnap.child("userId").getValue(String.class);
 
+                        long dateTimeMillis = selectedDateTime.getTimeInMillis();  // Default fallback value (could be removed)
 
-                        Object timestampObj = proposalSnap.child("dateTime").getValue();
+                        // Extract dateTime from proposal and handle the possible types (Long or Double)
+                        Object dateTimeObject = proposalSnap.child("dateTime").getValue();
                         Date dateTime;
-                        if (timestampObj instanceof Long) {
-                            dateTime = new Date((Long) timestampObj);
-                        } else if (timestampObj instanceof Double) {
-                            dateTime = new Date(((Double) timestampObj).longValue());
+                        if (dateTimeObject instanceof Long) {
+                            dateTime = new Date((Long) dateTimeObject);  // If it's a Long, convert it to Date
+                        } else if (dateTimeObject instanceof Double) {
+                            dateTime = new Date(((Double) dateTimeObject).longValue());  // If it's a Double, convert it to Date
                         } else {
-                            Log.e("ProposalListFragment", "Unexpected dateTime format: " + timestampObj);
-                            dateTime = new Date(0L);
+                            Log.e("ProposalListFragment", "Unexpected dateTime format: " + dateTimeObject);
+                            dateTime = new Date(0L); // Fallback to a default date if format is not expected
                         }
+
+
 
                         Proposal proposal = new Proposal();
                         proposal.setProposalId(proposalId);
                         proposal.setType(type);
                         proposal.setStartLocation(startLocation);
                         proposal.setEndLocation(endLocation);
-                        proposal.setDateTime(dateTime);
+                        proposal.setDateTime(dateTimeMillis);
 
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
@@ -255,14 +262,14 @@ public class ProposalListFragment extends Fragment {
                     }
 
                     if (proposals != null && !proposals.isEmpty()) {
-                        proposals.sort((p1, p2) -> p1.getDateTime().compareTo(p2.getDateTime()));
+                        proposals.sort((p1, p2) -> Long.compare(p1.getDateTime(), p2.getDateTime()));
                     } else {
                         Log.d("ProposalListFragment", "Proposals list is empty or null");
                     }
                     adapter.notifyDataSetChanged();
                 }
 
-                @Override
+                    @Override
                 public void onCancelled(DatabaseError error) {
                     if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                         Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();

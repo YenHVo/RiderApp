@@ -12,7 +12,7 @@ public class Proposal {
     private String riderId;
     private String car;
 
-    private Date dateTime;
+    private long dateTime;
 
     private Date createdAt;
     private int availableSeats;
@@ -35,7 +35,7 @@ public class Proposal {
 
 
     public Proposal(String type, String startLocation, String endLocation,
-                    String driverId, String riderId,String car, int availableSeats, Date dateTime) {
+                    String driverId, String riderId,String car, int availableSeats, long dateTime) {
         this.type = type;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
@@ -53,7 +53,7 @@ public class Proposal {
 
     // For Riders
     public Proposal(String type, String startLocation, String endLocation,
-                    String riderId, Date dateTime) {
+                    String riderId, long dateTime) {
         this.type = type;
         this.startLocation = startLocation;
         this.endLocation = endLocation;
@@ -163,11 +163,11 @@ public class Proposal {
         return createdAt;
     }
 
-    public Date getDateTime() {
+    public long getDateTime() {
         return dateTime;
     }
 
-    public void setDateTime(Date dateTime) {
+    public void setDateTime(long dateTime) {
         this.dateTime = dateTime;
     }
 

@@ -195,7 +195,7 @@ public class CreateProposalFragment extends Fragment {
                             currentUser.getUserId(),
                             null,
                             0,
-                            new Date(dateTimeMillis)
+                            dateTimeMillis
                     );
                     saveProposal(proposal, isOffer);
 
@@ -241,7 +241,7 @@ public class CreateProposalFragment extends Fragment {
                     null,
                     carModel,
                     availableSeats,
-                    new Date(dateTimeMillis)
+                    dateTimeMillis
             );
             saveProposal(proposal, isOffer);
 
@@ -309,22 +309,14 @@ public class CreateProposalFragment extends Fragment {
     private void saveProposal(Proposal proposal, boolean isDriver) {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
         String proposalId = proposalsRef.push().getKey();
-
         if (proposalId == null) {
             Toast.makeText(getContext(), "Failed to create proposal ID", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        User currentUser = getCurrentUser();
-        if (isDriver) {
-            proposal.setDriverId(currentUser.getUserId());
-            proposal.setDriverName(currentUser.getName());  // Add this line
-        } else {
-            proposal.setRiderId(currentUser.getUserId());
-            proposal.setRiderName(currentUser.getName());  // Add this line
-        }
-
         proposal.setProposalId(proposalId);
+
+
         proposalsRef.child(proposalId).setValue(proposal)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();
@@ -340,7 +332,7 @@ public class CreateProposalFragment extends Fragment {
                 });
     }
 
-    private void clearForm() {
+        private void clearForm() {
         startLocationEdit.setText("");
         endLocationEdit.setText("");
         carModelEdit.setText("");
