@@ -766,96 +766,6 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-    /*
-    public void updatePointsAfterRide(String driverId, String riderId) {
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
-        driverRef.get().addOnSuccessListener(driverSnapshot -> {
-            if (driverSnapshot.exists()) {
-                Long driverPoints = driverSnapshot.getValue(Long.class);
-                if (driverPoints == null) driverPoints = 0L;
-                driverRef.setValue(driverPoints + 100).addOnSuccessListener(aVoid -> {
-                    Log.d("HomeActivity", "Driver points updated successfully");
-                }).addOnFailureListener(e -> {
-                    Log.e("HomeActivity", "Failed to update driver points: " + e.getMessage());
-                });
-            } else {
-                Log.e("HomeActivity", "Driver points not found");
-            }
-        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch driver points: " + e.getMessage()));
-
-        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
-        riderRef.get().addOnSuccessListener(riderSnapshot -> {
-            if (riderSnapshot.exists()) {
-                Long riderPoints = riderSnapshot.getValue(Long.class);
-                if (riderPoints == null) riderPoints = 0L;
-                long updatedPoints = riderPoints - 100;
-                if (updatedPoints < 0) updatedPoints = 0;
-                riderRef.setValue(updatedPoints).addOnSuccessListener(aVoid -> {
-                    Log.d("HomeActivity", "Rider points updated successfully");
-                }).addOnFailureListener(e -> {
-                    Log.e("HomeActivity", "Failed to update rider points: " + e.getMessage());
-                });
-            } else {
-                Log.e("HomeActivity", "Rider points not found");
-            }
-        }).addOnFailureListener(e -> Log.e("HomeActivity", "Failed to fetch rider points: " + e.getMessage()));
-    }*/
-
-    /*
-    public void updatePointsAfterRide(String driverId, String riderId) {
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference("users").child(driverId).child("points");
-        DatabaseReference riderRef = FirebaseDatabase.getInstance().getReference("users").child(riderId).child("points");
-
-        // Update driver points
-        driverRef.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                Long points = mutableData.getValue(Long.class);
-                if (points == null) {
-                    mutableData.setValue(100L);
-                } else {
-                    mutableData.setValue(points + 100);
-                }
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
-                if (committed) {
-                    Log.d("LoadingActivity", "Driver points updated successfully");
-                } else {
-                    Log.e("LoadingActivity", "Failed to update driver points: " + databaseError.getMessage());
-                }
-            }
-        });
-
-        // Update rider points
-        riderRef.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                Long points = mutableData.getValue(Long.class);
-                if (points == null) {
-                    mutableData.setValue(0L);
-                } else {
-                    long newPoints = points - 100;
-                    mutableData.setValue(Math.max(newPoints, 0));
-                }
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
-                if (committed) {
-                    Log.d("LoadingActivity", "Rider points updated successfully");
-                } else {
-                    Log.e("LoadingActivity", "Failed to update rider points: " + databaseError.getMessage());
-                }
-            }
-        });
-
-        // Navigate to home after updates
-        navigateToHome();
-    }*/
     private void saveRideToHistory(String driverId, String riderId, String startLocation, String endLocation, long dateTime) {
         // Create a new RideHistory object
         RideHistory rideHistory = new RideHistory();
@@ -875,61 +785,6 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-    /*
-    private void updatePointsAfterRide(String driverId, String riderId) {
-        // Validate IDs first
-        if (driverId == null || riderId == null) {
-            Log.e("LoadingActivity", "Invalid user IDs - driver: " + driverId + ", rider: " + riderId);
-            navigateToHome();
-            return;
-        }
-
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        DatabaseReference driverRef = usersRef.child(driverId);
-        DatabaseReference riderRef = usersRef.child(riderId);
-
-        // Use Task API to fetch both driver and rider data in parallel
-        Task<DataSnapshot> driverTask = driverRef.get();
-        Task<DataSnapshot> riderTask = riderRef.get();
-
-        Tasks.whenAllSuccess(driverTask, riderTask).addOnSuccessListener(tasks -> {
-            // Ensure both tasks were successful
-            DataSnapshot driverSnapshot = (DataSnapshot) tasks.get(0);
-            DataSnapshot riderSnapshot = (DataSnapshot) tasks.get(1);
-
-            User driver = driverSnapshot.getValue(User.class);
-            User rider = riderSnapshot.getValue(User.class);
-
-            if (driver == null || rider == null) {
-                Log.e("LoadingActivity", "Driver or Rider data not found");
-                navigateToHome();
-                return;
-            }
-
-            long newDriverPoints = driver.getPoints() + 100;
-            long newRiderPoints = Math.max(rider.getPoints() - 100, 0);
-
-            // Perform atomic update for both users' points
-            Map<String, Object> updates = new HashMap<>();
-            updates.put(driverId + "/points", newDriverPoints);
-            updates.put(riderId + "/points", newRiderPoints);
-
-            // Update points in the database
-            usersRef.updateChildren(updates)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d("LoadingActivity", "Points updated successfully");
-                        navigateToHome();
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e("LoadingActivity", "Failed to update points", e);
-                        navigateToHome();
-                    });
-        }).addOnFailureListener(e -> {
-            Log.e("LoadingActivity", "Failed to retrieve data", e);
-            navigateToHome();
-        });
-    }*/
-
     private void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
@@ -948,11 +803,9 @@ public class LoadingActivity extends AppCompatActivity {
         Tasks.whenAll(driverUpdate, riderUpdate)
                 .addOnSuccessListener(aVoid -> {
                     Log.d("LoadingActivity", "Both driver and rider points updated successfully!");
-                    navigateToHome();
                 })
                 .addOnFailureListener(e -> {
                     Log.e("LoadingActivity", "Failed to update points", e);
-                    navigateToHome();
                 });
     }
 
@@ -963,15 +816,6 @@ public class LoadingActivity extends AppCompatActivity {
         acceptedRidesRef.child(driverId).child(proposalRef.getKey()).removeValue();
         acceptedRidesRef.child(riderId).child(proposalRef.getKey()).removeValue();
     }
-
-
-    // private void navigateToHome() {
-    //   Intent intent = new Intent(this, HomeActivity.class);
-    // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-    //startActivity(intent);
-    //finish();
-    //}
-
 
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
