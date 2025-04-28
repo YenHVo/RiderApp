@@ -104,12 +104,18 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         logoutButton.setOnClickListener(v -> {
+            if (userRef != null && userListener != null) {
+                userRef.removeEventListener(userListener);
+            }
+
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(HomeActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
         });
+
+
 
         findViewById(R.id.viewAcceptedRidesBtn).setOnClickListener(v -> {
 
