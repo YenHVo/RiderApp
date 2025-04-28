@@ -54,18 +54,20 @@ public class AcceptedRidesFragment extends Fragment {
     }
 
     private void loadAcceptedRides() {
-        // Query Firebase for accepted rides
-        acceptedRidesRef.orderByChild("dateTime").addListenerForSingleValueEvent(new ValueEventListener() {
+        // Query Firebase for accepted rides by both driverId and riderId
+        acceptedRidesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 acceptedRidesList.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Ride ride = snapshot.getValue(Ride.class);
-                    if (ride != null) {
-                        acceptedRidesList.add(ride);
+                for (DataSnapshot driverSnapshot : dataSnapshot.getChildren()) {
+                    for (DataSnapshot rideSnapshot : driverSnapshot.getChildren()) {
+                        Ride ride = rideSnapshot.getValue(Ride.class);
+                        if (ride != null) {
+                            acceptedRidesList.add(ride);
+                        }
                     }
                 }
-                adapter.setRides(acceptedRidesList);
+                adapter.setRides(acceptedRidesList); // Notify the adapter of the data change
             }
 
             @Override
