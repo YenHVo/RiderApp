@@ -157,9 +157,9 @@ public class LoadingActivity extends AppCompatActivity {
                             long currentTimeMillis = System.currentTimeMillis();
                             long rideTimeMillis = proposal.getDateTime();
 
-                            if (rideTimeMillis > currentTimeMillis) {
+                            if (rideTimeMillis > currentTimeMillis + (3 * 60 * 1000)) {
                                 moveRideToAccepted(snapshot);
-                                finish();
+                                return;
                             } else {
                                 showAcceptedScreen(proposal);
                                 return;
@@ -575,7 +575,7 @@ public class LoadingActivity extends AppCompatActivity {
         }
 
         Toast.makeText(this, "Ride moved to accepted rides.", Toast.LENGTH_SHORT).show();
-        //navigateToHome();
+        navigateToHome();
     }
 
     private void navigateToLoadingActivity() {
