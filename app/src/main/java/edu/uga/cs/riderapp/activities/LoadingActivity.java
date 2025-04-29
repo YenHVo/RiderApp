@@ -94,8 +94,6 @@ public class LoadingActivity extends AppCompatActivity {
         initializeViews();
         setupButtonListeners();
         setupDatabaseListener();
-
-        listenToFinalStatus();
     }
 
     private void initializeViews() {
@@ -157,7 +155,7 @@ public class LoadingActivity extends AppCompatActivity {
                             long currentTimeMillis = System.currentTimeMillis();
                             long rideTimeMillis = proposal.getDateTime();
 
-                            if (rideTimeMillis > currentTimeMillis + (3 * 60 * 1000)) {
+                            if (rideTimeMillis > currentTimeMillis) {
                                 moveRideToAccepted(snapshot);
                                 return;
                             } else {
@@ -423,6 +421,19 @@ public class LoadingActivity extends AppCompatActivity {
     private void acceptProposal() {
         String statusField = isDriver ? "driverStatus" : "riderStatus";
 
+        proposalRef.child(statusField).setValue("accepted")
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(LoadingActivity.this, "Accepted! Waiting for the other user...", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(LoadingActivity.this, "Failed to accept proposal", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /*
+    private void acceptProposal() {
+        String statusField = isDriver ? "driverStatus" : "riderStatus";
+
         // Update the status in Firebase
         proposalRef.child(statusField).setValue("accepted")
                 .addOnSuccessListener(aVoid -> {
@@ -444,34 +455,9 @@ public class LoadingActivity extends AppCompatActivity {
                         }
                     });
                 });
-    }
+    }*/
 
-        private void listenToFinalStatus() {
-            DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference()
-                    .child("accepted_rides")
-                    .child(proposalId);
-
-            proposalRef.child("finalStatus").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    String finalStatus = snapshot.getValue(String.class);
-                    if (finalStatus == null) return;
-
-                    if ("accepted".equals(finalStatus)) {
-                        navigateToHome();
-                    } else if ("past".equals(finalStatus)) {
-                        navigateToLoadingActivity();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Log.e("listenToFinalStatus", "Failed to listen to finalStatus: " + error.getMessage());
-                }
-            });
-        }
-
-
+    /*
     private void checkRideDateAndMove(DataSnapshot snapshot) {
         Long dateTimeMillis = snapshot.child("dateTime").getValue(Long.class);
         if (dateTimeMillis == null) {
@@ -500,39 +486,6 @@ public class LoadingActivity extends AppCompatActivity {
                         Log.e("checkRideDateAndMove", "Failed to set finalStatus to past.", e);
                     });
         }
-    }
-
-    /*
-    private void moveRideToAccepted(DataSnapshot snapshot) {
-        String proposalId = proposalRef.getKey();
-        String driverId = snapshot.child("driverId").getValue(String.class);
-        String riderId = snapshot.child("riderId").getValue(String.class);
-
-        if (driverId == null || riderId == null || proposalId == null) {
-            Log.e("moveRideToAccepted", "Missing essential data for accepted ride.");
-            return;
-        }
-
-        DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
-
-        // Move the ride to accepted_rides
-        Ride acceptedRide = snapshot.getValue(Ride.class);
-        acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
-        acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRide);
-
-        // Remove from offered and requested rides
-        DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
-        DatabaseReference requestedRidesRef = FirebaseDatabase.getInstance().getReference("requested_rides");
-
-        if (isDriver) {
-            requestedRidesRef.child(proposalId).removeValue();
-        } else {
-            offeredRidesRef.child(proposalId).removeValue();
-        }
-
-        // Show message and navigate to home
-        Toast.makeText(this, "Ride moved to accepted rides.", Toast.LENGTH_SHORT).show();
-        navigateToHome();
     }*/
 
     private void moveRideToAccepted(DataSnapshot snapshot) {
@@ -577,23 +530,6 @@ public class LoadingActivity extends AppCompatActivity {
         Toast.makeText(this, "Ride moved to accepted rides.", Toast.LENGTH_SHORT).show();
         navigateToHome();
     }
-
-    private void navigateToLoadingActivity() {
-        Intent intent = new Intent(this, LoadingActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
-
-
-    private void setFinalStatusToPast() {
-        proposalRef.child("finalStatus").setValue("past").addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                navigateToLoadingActivity();
-            }
-        });
-    }
-
 
     private void rejectProposal() {
         // Reset both statuses to pending
