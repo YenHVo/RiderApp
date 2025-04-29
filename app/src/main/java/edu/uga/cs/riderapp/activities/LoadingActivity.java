@@ -154,8 +154,16 @@ public class LoadingActivity extends AppCompatActivity {
                         }
 
                         if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
-                            showAcceptedScreen(proposal);
-                            return;
+                            long currentTimeMillis = System.currentTimeMillis();
+                            long rideTimeMillis = proposal.getDateTime();
+
+                            if (rideTimeMillis > currentTimeMillis) {
+                                moveRideToAccepted(snapshot);
+                                return;
+                            } else {
+                                showAcceptedScreen(proposal);
+                                return;
+                            }
                         }
 
                         if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {

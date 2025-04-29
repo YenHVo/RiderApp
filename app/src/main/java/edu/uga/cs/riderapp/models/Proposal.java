@@ -11,18 +11,14 @@ public class Proposal {
     private String driverId;
     private String riderId;
     private String car;
-
     private long dateTime;
-
     private Date createdAt;
     private int availableSeats;
     private boolean confirmedByDriver;
     private boolean confirmedByRider;
     private String driverName;
     private String riderName;
-
     private String riderStatus;
-
     private String driverStatus;
 
     public Proposal() {
@@ -32,7 +28,6 @@ public class Proposal {
         this.confirmedByDriver = false;
         this.confirmedByRider = false;
     }
-
 
     public Proposal(String type, String startLocation, String endLocation,
                     String driverId, String riderId,String car, int availableSeats, long dateTime) {
@@ -66,7 +61,6 @@ public class Proposal {
         this.confirmedByDriver = false;
         this.confirmedByRider = false;
     }
-
 
     public String getProposalId() {
         return proposalId;
