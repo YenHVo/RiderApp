@@ -29,7 +29,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         return new RideViewHolder(view);
     }
 
-    // Bind the data to the views
+    /*
     @Override
     public void onBindViewHolder(RideViewHolder holder, int position) {
         Ride ride = rides.get(position);
@@ -41,6 +41,24 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         holder.dateTimeTextView.setText(formattedDate);
 
         holder.pointsTextView.setText("Points: " + ride.getPoints());
+    }*/
+
+    @Override
+    public void onBindViewHolder(RideViewHolder holder, int position) {
+        Ride ride = rides.get(position);
+        holder.startLocationTextView.setText(ride.getStartLocation());
+        holder.endLocationTextView.setText(ride.getEndLocation());
+
+        // Format the dateTime as a readable string
+        String formattedDate = formatDate(ride.getDateTime());
+        holder.dateTimeTextView.setText(formattedDate);
+
+        Long points = ride.getPoints();
+        if (points == null) {
+            holder.pointsTextView.setText("Points: 0");
+        } else {
+            holder.pointsTextView.setText("Points: " + points);
+        }
     }
 
     // Return the size of the dataset (invoked by the layout manager)

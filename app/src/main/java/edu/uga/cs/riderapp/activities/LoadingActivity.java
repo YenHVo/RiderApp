@@ -159,7 +159,7 @@ public class LoadingActivity extends AppCompatActivity {
 
                             if (rideTimeMillis > currentTimeMillis) {
                                 moveRideToAccepted(snapshot);
-                                return;
+                                finish();
                             } else {
                                 showAcceptedScreen(proposal);
                                 return;
@@ -502,8 +502,7 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-
-
+    /*
     private void moveRideToAccepted(DataSnapshot snapshot) {
         String proposalId = proposalRef.getKey();
         String driverId = snapshot.child("driverId").getValue(String.class);
@@ -534,6 +533,49 @@ public class LoadingActivity extends AppCompatActivity {
         // Show message and navigate to home
         Toast.makeText(this, "Ride moved to accepted rides.", Toast.LENGTH_SHORT).show();
         navigateToHome();
+    }*/
+
+    private void moveRideToAccepted(DataSnapshot snapshot) {
+        String proposalId = proposalRef.getKey();
+        String driverId = snapshot.child("driverId").getValue(String.class);
+        String riderId = snapshot.child("riderId").getValue(String.class);
+
+        if (driverId == null || riderId == null || proposalId == null) {
+            Log.e("moveRideToAccepted", "Missing essential data for accepted ride.");
+            return;
+        }
+
+        DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
+
+        Ride acceptedRide = new Ride();
+        acceptedRide.setProposalId(proposalId);
+        acceptedRide.setDriverId(driverId);
+        acceptedRide.setRiderId(riderId);
+
+        acceptedRide.setStartLocation(snapshot.child("startLocation").getValue(String.class));
+        acceptedRide.setEndLocation(snapshot.child("endLocation").getValue(String.class));
+        acceptedRide.setDateTime(snapshot.child("dateTime").getValue(Long.class));
+
+        acceptedRide.setPoints(100L); // Points for the driver
+
+        Ride acceptedRideForRider = new Ride(acceptedRide);
+        acceptedRideForRider.setPoints(-100L); // Points for the rider
+
+        acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
+        acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRideForRider);
+
+        // Remove from offered and requested rides
+        DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
+        DatabaseReference requestedRidesRef = FirebaseDatabase.getInstance().getReference("requested_rides");
+
+        if (isDriver) {
+            requestedRidesRef.child(proposalId).removeValue();
+        } else {
+            offeredRidesRef.child(proposalId).removeValue();
+        }
+
+        Toast.makeText(this, "Ride moved to accepted rides.", Toast.LENGTH_SHORT).show();
+        //navigateToHome();
     }
 
     private void navigateToLoadingActivity() {

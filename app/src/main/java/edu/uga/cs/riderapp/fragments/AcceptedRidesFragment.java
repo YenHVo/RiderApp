@@ -54,6 +54,7 @@ public class AcceptedRidesFragment extends Fragment {
         return view;
     }
 
+    /*
     private void loadAcceptedRides() {
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -80,5 +81,30 @@ public class AcceptedRidesFragment extends Fragment {
                 Toast.makeText(getContext(), "Failed to load accepted rides", Toast.LENGTH_SHORT).show();
             }
         });
+    }*/
+
+    private void loadAcceptedRides() {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        acceptedRidesRef.child(currentUserId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                acceptedRidesList.clear();
+                for (DataSnapshot rideSnapshot : dataSnapshot.getChildren()) {
+                    Ride ride = rideSnapshot.getValue(Ride.class);
+
+                    if (ride != null) {
+                        acceptedRidesList.add(ride);
+                    }
+                }
+                adapter.setRides(acceptedRidesList); // Notify the adapter of the data change
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(getContext(), "Failed to load accepted rides", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
 }

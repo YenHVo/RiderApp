@@ -33,6 +33,22 @@ public class Ride {
         this.riderEmail = riderEmail;
     }
 
+    // Copy constructor
+    public Ride(Ride other) {
+        if (other == null) return;
+
+        this.driverId = other.driverId;
+        this.riderId = other.riderId;
+        this.startLocation = other.startLocation;
+        this.endLocation = other.endLocation;
+        this.dateTime = other.dateTime;
+        this.points = other.points;
+        this.status = other.status;
+        this.proposalId = other.proposalId;
+        this.driverEmail = other.driverEmail;
+        this.riderEmail = other.riderEmail;
+    }
+
     // Getters and Setters
     public String getDriverId() { return driverId; }
     public void setDriverId(String driverId) { this.driverId = driverId; }
