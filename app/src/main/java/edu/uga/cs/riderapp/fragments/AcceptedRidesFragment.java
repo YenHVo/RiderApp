@@ -55,7 +55,9 @@ public class AcceptedRidesFragment extends Fragment {
     }
 
     private void loadAcceptedRides() {
-        // Query Firebase for accepted rides by both driverId and riderId
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // Query Firebase for accepted rides where the current user is either the driver or the rider
         acceptedRidesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -63,7 +65,9 @@ public class AcceptedRidesFragment extends Fragment {
                 for (DataSnapshot driverSnapshot : dataSnapshot.getChildren()) {
                     for (DataSnapshot rideSnapshot : driverSnapshot.getChildren()) {
                         Ride ride = rideSnapshot.getValue(Ride.class);
-                        if (ride != null) {
+
+                        if (ride != null && (ride.getDriverId().equals(currentUserId) || ride.getRiderId().equals(currentUserId))) {
+                            // Only add rides where the current user is either the driver or the rider
                             acceptedRidesList.add(ride);
                         }
                     }
