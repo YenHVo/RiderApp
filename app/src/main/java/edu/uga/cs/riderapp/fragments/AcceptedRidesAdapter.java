@@ -29,19 +29,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         return new RideViewHolder(view);
     }
 
-    /*
-    @Override
-    public void onBindViewHolder(RideViewHolder holder, int position) {
-        Ride ride = rides.get(position);
-        holder.startLocationTextView.setText(ride.getStartLocation());
-        holder.endLocationTextView.setText(ride.getEndLocation());
 
-        // Format the dateTime as a readable string
-        String formattedDate = formatDate(ride.getDateTime());
-        holder.dateTimeTextView.setText(formattedDate);
-
-        holder.pointsTextView.setText("Points: " + ride.getPoints());
-    }*/
 
     @Override
     public void onBindViewHolder(RideViewHolder holder, int position) {

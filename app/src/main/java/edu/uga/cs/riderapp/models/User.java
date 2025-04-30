@@ -7,14 +7,12 @@ public class User {
     private String userId;
     private String email;
     private String name;
-    //private boolean isRider;
-    //private boolean isDriver;
+
     private long points;
     private Date createdAt;
 
     public User() {
-        //this.isRider = true;
-        //this.isDriver = true;
+
         this.points = 0;
         this.createdAt = new Date();
     }
@@ -22,8 +20,7 @@ public class User {
     public User(String email, String name) {
         this.email = email;
         this.name = name;
-        //this.isRider = true;
-        //this.isDriver = true;
+
         this.points = 0;
         this.createdAt = new Date();
     }
@@ -32,8 +29,7 @@ public class User {
         this.userId = userId;
         this.email = email;
         this.name = name;
-        //this.isRider = isRider;
-        //this.isDriver = isDriver;
+
         this.points = points;
         this.createdAt = createdAt;
     }
@@ -62,23 +58,6 @@ public class User {
     public void setName(String name) {
         this.name = name;
     }
-
-    /*
-    public boolean isRider() {
-        return isRider;
-    }
-
-    public void setRider(boolean rider) {
-        isRider = rider;
-    }
-
-    public boolean isDriver() {
-        return isDriver;
-    }
-
-    public void setDriver(boolean driver) {
-        isDriver = driver;
-    }*/
 
     public long getPoints() {
         return points;

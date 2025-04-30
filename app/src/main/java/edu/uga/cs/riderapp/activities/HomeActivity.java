@@ -201,123 +201,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-        /*
-        userNameTextView = findViewById(R.id.userNameTextView);
-        pointsTextView = findViewById(R.id.pointsTextView);
-        logoutButton = findViewById(R.id.logoutButton);
 
-        getCurrentUserFromFirebase();
-
-        if (savedInstanceState == null) {
-            try {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new ProposalListFragment())
-                        .commit();
-            } catch (Exception e) {
-                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
-            }
-        }
-
-        findViewById(R.id.profileBtn).setOnClickListener(v -> {
-            try {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new ProfileFragment())
-                        .addToBackStack(null) // allows back button to return
-                        .commit();
-            } catch (Exception e) {
-                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
-            }
-        });
-
-        findViewById(R.id.createRideBtn).setOnClickListener(v -> {
-            try {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new CreateProposalFragment())
-                        .commit();
-            } catch (Exception e) {
-                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
-            }
-        });
-
-        findViewById(R.id.homeBtn).setOnClickListener(v -> {
-            try {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new ProposalListFragment())
-                        .commit();
-            } catch (Exception e) {
-                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
-            }
-        });
-
-        logoutButton.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(HomeActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        });
-    }*/
-
-    /*
-    private void getCurrentUserFromFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String currentUserId = currentUser.getUid();
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
-
-            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        user = snapshot.getValue(User.class);
-                        updateUserInfo();
-                    } else {
-                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(HomeActivity.this, MainActivity.class));
-            finish();
-        }
-    }*/
-
-    /*
-    private void getCurrentUserFromFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String currentUserId = currentUser.getUid();
-            userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
-
-            userListener = new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        user = snapshot.getValue(User.class);
-                        updateUserInfo();
-                    } else {
-                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
-                }
-            };
-            userRef.addValueEventListener(userListener);
-        } else {
-            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(HomeActivity.this, MainActivity.class));
-            finish();
-        }
-    }*/
     private void getCurrentUserFromFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -352,24 +236,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    /*
-    private void updateUserInfo() {
-        if (user != null) {
-            userNameTextView.setText("Welcome, " + user.getName() + "!");
-            pointsTextView.setText(user.getPoints() + " points");
-        } else {
-            Toast.makeText(HomeActivity.this, "User info not available", Toast.LENGTH_SHORT).show();
-        }
-    }*/
 
-    /*
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (userRef != null && userListener != null) {
-            userRef.removeEventListener(userListener);
-        }
-    }*/
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -386,20 +253,7 @@ public class HomeActivity extends AppCompatActivity {
             finish();
         }
 
-        /*else {
 
-            Intent intent = getIntent();
-            long updatedPoints = intent.getLongExtra("updatedPoints", -1);
-            if (updatedPoints != -1) {
-
-                if (user != null) {
-                    user.setPoints(updatedPoints);
-                    updateUserInfo();
-                } else {
-                    Log.e("HomeActivity", "User object is not initialized.");
-                }
-            }
-        }*/
     }
 }
 

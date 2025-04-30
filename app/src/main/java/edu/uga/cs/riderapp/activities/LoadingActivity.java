@@ -430,63 +430,7 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
-    /*
-    private void acceptProposal() {
-        String statusField = isDriver ? "driverStatus" : "riderStatus";
 
-        // Update the status in Firebase
-        proposalRef.child(statusField).setValue("accepted")
-                .addOnSuccessListener(aVoid -> {
-                    // After accepting, check if both have accepted
-                    proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot snapshot) {
-                            String driverStatus = snapshot.child("driverStatus").getValue(String.class);
-                            String riderStatus = snapshot.child("riderStatus").getValue(String.class);
-                            if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
-                                // Both the driver and the rider have accepted
-                                checkRideDateAndMove(snapshot);
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError error) {
-                            // Handle potential errors
-                        }
-                    });
-                });
-    }*/
-
-    /*
-    private void checkRideDateAndMove(DataSnapshot snapshot) {
-        Long dateTimeMillis = snapshot.child("dateTime").getValue(Long.class);
-        if (dateTimeMillis == null) {
-            Log.e("checkRideDateAndMove", "DateTime is missing.");
-            return;
-        }
-
-        long currentTimeMillis = System.currentTimeMillis();
-
-        if (dateTimeMillis > currentTimeMillis) {
-            // Future ride: set finalStatus to "accepted"
-            proposalRef.child("finalStatus").setValue("accepted")
-                    .addOnSuccessListener(aVoid -> {
-                        moveRideToAccepted(snapshot);
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e("checkRideDateAndMove", "Failed to set finalStatus to accepted.", e);
-                    });
-        } else {
-            // Past or now ride: set finalStatus to "past"
-            proposalRef.child("finalStatus").setValue("past")
-                    .addOnSuccessListener(aVoid -> {
-                        navigateToLoadingActivity();
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e("checkRideDateAndMove", "Failed to set finalStatus to past.", e);
-                    });
-        }
-    }*/
 
     private void moveRideToAccepted(DataSnapshot snapshot) {
         String proposalId = proposalRef.getKey();

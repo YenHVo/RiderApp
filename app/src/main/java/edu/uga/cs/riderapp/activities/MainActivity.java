@@ -45,12 +45,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-        // todo: delete this, used it for testing
-       // loginButton.setOnClickListener(v -> {
-         //   Intent intent = new Intent(MainActivity.this, HomeActivity.class);
-            //startActivity(intent);
-          //  finish();
-     //   });
+
 
     }
 }
