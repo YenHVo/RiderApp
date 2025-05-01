@@ -1,6 +1,7 @@
 package edu.uga.cs.riderapp.fragments;
 
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,7 +98,6 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
                     if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
                         holder.startRideBtn.setVisibility(View.VISIBLE);
                         holder.startRideBtn.setOnClickListener(v -> {
-                            String statusField = isDriver ? "driverStatus" : "riderStatus";
                             proposalRef.child(statusField).setValue("accepted")
                                     .addOnSuccessListener(aVoid -> {
                                         Intent intent = new Intent(v.getContext(), LoadingActivity.class);

@@ -512,7 +512,7 @@ public class LoadingActivity extends AppCompatActivity {
         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRideForRider);
 
-        // Reset statuses to pending to allow confirmation later
+        // Reset statuses to incoming to allow confirmation later
         proposalRef.child("driverStatus").setValue("incoming");
         proposalRef.child("riderStatus").setValue("incoming");
 
@@ -620,8 +620,6 @@ public class LoadingActivity extends AppCompatActivity {
                 .setPositiveButton("Return to Home", (dialog, which) -> navigateToHome())
                 .show();
     }
-
-
 
     /**
      * Sets the current user's status to "completed" and checks if both parties
