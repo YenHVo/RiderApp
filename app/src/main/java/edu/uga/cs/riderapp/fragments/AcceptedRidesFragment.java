@@ -70,10 +70,10 @@ public class AcceptedRidesFragment extends Fragment {
             @Override
             public void run() {
                 adapter.notifyDataSetChanged();
-                refreshHandler.postDelayed(this, 5000);
+                refreshHandler.postDelayed(this, 30000);
             }
         };
-        refreshHandler.postDelayed(refreshRunnable, 5000);
+        refreshHandler.postDelayed(refreshRunnable, 30000);
 
         return view;
     }
