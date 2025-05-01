@@ -91,6 +91,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
                 if (isCancelled) {
                     holder.startLocationTextView.setText("Your ride to " + ride.getEndLocation() + " has been cancelled.");
                     holder.endLocationTextView.setText("Please create a new one and try again.");
+                    holder.pointsTextView.setVisibility(View.GONE);
                     holder.startRideBtn.setVisibility(View.GONE);
                 } else {
                     if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
