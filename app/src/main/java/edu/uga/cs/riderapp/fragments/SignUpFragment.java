@@ -17,6 +17,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import androidx.fragment.app.FragmentTransaction;
+import android.view.View;
+
+
 
 import java.util.Date;
 
@@ -33,6 +37,7 @@ public class SignUpFragment extends Fragment {
     private EditText emailEditText, passwordEditText, nameEditText;
     private Button signUpButton;
     private ProgressBar progressBar;
+    private Button goToLoginBtn;
 
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
@@ -44,8 +49,8 @@ public class SignUpFragment extends Fragment {
     /**
      * Inflates the fragment layout and sets up listeners and Firebase references.
      *
-     * @param inflater LayoutInflater to inflate the fragment layout.
-     * @param container ViewGroup that hosts the fragment UI.
+     * @param inflater           LayoutInflater to inflate the fragment layout.
+     * @param container          ViewGroup that hosts the fragment UI.
      * @param savedInstanceState Previous state if re-created.
      * @return View instance for this fragment.
      */
@@ -60,6 +65,8 @@ public class SignUpFragment extends Fragment {
         nameEditText = view.findViewById(R.id.name_edit_text);
         signUpButton = view.findViewById(R.id.sign_up_btn);
         progressBar = view.findViewById(R.id.progressBar);
+        goToLoginBtn = view.findViewById(R.id.go_to_login_btn);
+
 
         // Initialize Firebase authentication and database
         mAuth = FirebaseAuth.getInstance();
@@ -67,6 +74,13 @@ public class SignUpFragment extends Fragment {
 
         // Set listener to sign up button
         signUpButton.setOnClickListener(v -> registerUser());
+
+        goToLoginBtn.setOnClickListener(v -> {
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, new LoginFragment());
+            transaction.addToBackStack(null);
+            transaction.commit();
+        });
 
         return view;
     }
@@ -130,4 +144,6 @@ public class SignUpFragment extends Fragment {
                     }
                 });
     }
+
 }
+

@@ -60,6 +60,15 @@
             android:visibility="gone"
             android:layout_gravity="center" />
 
+        <Button
+            android:id="@+id/go_to_login_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Already have an account? Login"
+            android:layout_marginTop="16dp"
+            />
+
+
     </LinearLayout>
 </ScrollView>
 
