@@ -37,11 +37,6 @@ import edu.uga.cs.riderapp.models.Proposal;
  */
 public class ProposalListFragment extends Fragment {
 
-    /*
-    private static final String ARG_RIDER_ID = "riderId";
-    private static final String ARG_DRIVER_ID = "driverId";
-    private String currentRiderId;
-    private String currentDriverId;*/
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
     private List<Proposal> proposals = new ArrayList<>();
@@ -51,31 +46,6 @@ public class ProposalListFragment extends Fragment {
     public ProposalListFragment() {
         // Required empty public constructor
     }
-
-    /*
-    @SuppressWarnings("unused")
-    public static ProposalListFragment newInstance(String riderId, String driverId) {
-        ProposalListFragment fragment = new ProposalListFragment();
-        Bundle args = new Bundle();
-        if (riderId != null) {
-            args.putString(ARG_RIDER_ID, riderId);
-        }
-        if (driverId != null) {
-            args.putString(ARG_DRIVER_ID, driverId);
-        }
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            currentRiderId = getArguments().getString(ARG_RIDER_ID);
-            currentDriverId = getArguments().getString(ARG_DRIVER_ID);
-        }
-    }*/
 
     /**
      * Sets up the RecyclerView and its adapter, and initializes Firebase listeners.

@@ -59,14 +59,6 @@ public class CreateProposalFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /*
-    public static CreateProposalFragment newInstance(String param1, String param2) {
-        CreateProposalFragment fragment = new CreateProposalFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
-    }
-    */
 
     /**
      * Inflates the fragment layout, initializes UI components,
