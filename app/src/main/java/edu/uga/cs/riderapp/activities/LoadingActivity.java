@@ -232,8 +232,8 @@ public class LoadingActivity extends AppCompatActivity {
         loadingText.setVisibility(View.VISIBLE);
         loadingText.setText("Waiting for a match...");
         subText.setVisibility(View.VISIBLE);
-        backButton.setVisibility(View.VISIBLE);
 
+        backButton.setVisibility(View.GONE);
         driverAcceptedLayout.setVisibility(View.GONE);
         riderAcceptedLayout.setVisibility(View.GONE);
         driverButtonContainer.setVisibility(View.GONE);
@@ -567,11 +567,11 @@ public class LoadingActivity extends AppCompatActivity {
     }
 
     /**
-     * Cancels the current proposal by setting its status to "cancelled".
+     * Cancels the current proposal by setting its status to "pending".
      */
     private void cancelProposal() {
         if (proposalRef != null) {
-            proposalRef.child("status").setValue("cancelled")
+            proposalRef.child("status").setValue("pending")
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(LoadingActivity.this, "Proposal cancelled", Toast.LENGTH_SHORT).show();
                         navigateToHome();

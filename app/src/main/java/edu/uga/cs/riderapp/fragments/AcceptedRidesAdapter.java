@@ -1,16 +1,23 @@
 package edu.uga.cs.riderapp.fragments;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+import edu.uga.cs.riderapp.activities.LoadingActivity;
 import edu.uga.cs.riderapp.models.Ride;
 import edu.uga.cs.riderapp.R;
 
@@ -62,6 +69,29 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         } else {
             holder.pointsTextView.setText("Points: " + points);
         }
+
+        // Show button only if current time > ride time
+        if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
+            holder.startRideBtn.setVisibility(View.VISIBLE);
+
+            holder.startRideBtn.setOnClickListener(v -> {
+                boolean isDriver = ride.getPoints() != null && ride.getPoints() > 0;
+                String proposalId = ride.getProposalId();
+
+                DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
+                String statusField = isDriver ? "driverStatus" : "riderStatus";
+
+                proposalRef.child(statusField).setValue("accepted")
+                        .addOnSuccessListener(aVoid -> {
+                            Intent intent = new Intent(v.getContext(), LoadingActivity.class);
+                            intent.putExtra("proposalId", proposalId);
+                            intent.putExtra("isDriver", isDriver);
+                            v.getContext().startActivity(intent);
+                        });
+            });
+        } else {
+            holder.startRideBtn.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -80,6 +110,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         TextView endLocationTextView;
         TextView dateTimeTextView;
         TextView pointsTextView;
+        Button startRideBtn;
 
         /**
          * Constructor binds the views from the ride_item layout.
@@ -90,6 +121,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
             endLocationTextView = itemView.findViewById(R.id.end_location);
             dateTimeTextView = itemView.findViewById(R.id.date_time);
             pointsTextView = itemView.findViewById(R.id.points);
+            startRideBtn = itemView.findViewById(R.id.startRideBtn);
         }
     }
 
