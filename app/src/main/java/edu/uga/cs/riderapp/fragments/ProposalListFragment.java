@@ -3,6 +3,7 @@ package edu.uga.cs.riderapp.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -216,6 +217,7 @@ public class ProposalListFragment extends Fragment {
                                 Log.e("ProposalListFragment", "Offer missing driverId at key: " + proposalId);
                                 continue;
                             }
+
                         } else if ("request".equals(type)) {
                             // Handle request-specific data
                             String riderId = proposalSnap.child("riderId").getValue(String.class);
@@ -226,7 +228,6 @@ public class ProposalListFragment extends Fragment {
                                 continue;
                             }
                         }
-
                         // Driver/Rider status
                         String driverStatus = proposalSnap.child("driverStatus").getValue(String.class);
                         String riderStatus = proposalSnap.child("riderStatus").getValue(String.class);
@@ -255,11 +256,14 @@ public class ProposalListFragment extends Fragment {
                         Toast.makeText(getContext(), "Failed to load proposals.", Toast.LENGTH_SHORT).show();
                     }
                 }
+
+
             };
 
             proposalsRef.addValueEventListener(proposalsListener);
         }
     }
+
 
     /**
      * Removes the Firebase listener when the fragment is stopped.
