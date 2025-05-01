@@ -89,14 +89,12 @@ public class LoadingActivity extends AppCompatActivity {
             return;
         }
 
-        // Initializes UI elements and sets up listeners
+
 
         listenForOtherUserRejection();
         initializeViews();
         setupButtonListeners();
         setupDatabaseListener();
-
-
 
     }
 
@@ -549,17 +547,29 @@ public class LoadingActivity extends AppCompatActivity {
 
                 Map<String, Object> updates = new HashMap<>();
 
+
                 if (currentUserId.equals(driverId)) {
-                    updates.put("driverStatus", "rejected");
-                } else if (currentUserId.equals(riderId)) {
                     updates.put("riderStatus", "rejected");
-                } else {
-                    return; // user is neither driver nor rider
                 }
 
+                else if (currentUserId.equals(riderId)) {
+                    updates.put("driverStatus", "rejected");
+                } else {
+                    return;
+                }
+
+
+                updates.put("driverStatus", "pending");
+                updates.put("riderStatus", "pending");
+
                 proposalRef.updateChildren(updates).addOnSuccessListener(unused -> {
-                    Toast.makeText(LoadingActivity.this, "You have rejected the proposal", Toast.LENGTH_SHORT).show();
-                    navigateToHome();
+                    if (currentUserId.equals(driverId)) {
+
+                        showInitialWaitingState();
+                    } else {
+
+                        showRejectionMessage();
+                    }
                 }).addOnFailureListener(e -> {
                     Toast.makeText(LoadingActivity.this, "Failed to reject proposal", Toast.LENGTH_SHORT).show();
                 });
@@ -571,6 +581,7 @@ public class LoadingActivity extends AppCompatActivity {
             }
         });
     }
+
     private void listenForOtherUserRejection() {
         if (proposalRef == null || currentUserId == null) return;
 
@@ -587,10 +598,11 @@ public class LoadingActivity extends AppCompatActivity {
                 boolean isDriver = currentUserId.equals(driverId);
                 boolean isRider = currentUserId.equals(riderId);
 
+
                 if (isDriver && "rejected".equals(riderStatus)) {
-                    showRejectionDialog();
+                    showRejectionMessage();
                 } else if (isRider && "rejected".equals(driverStatus)) {
-                    showRejectionDialog();
+                    showRejectionMessage();
                 }
             }
 
@@ -599,7 +611,8 @@ public class LoadingActivity extends AppCompatActivity {
             }
         });
     }
-    private void showRejectionDialog() {
+
+    private void showRejectionMessage() {
         new AlertDialog.Builder(this)
                 .setTitle("Proposal Rejected")
                 .setMessage("The other user has rejected the proposal.")
