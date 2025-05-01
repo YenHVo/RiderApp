@@ -97,7 +97,6 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
                     if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
                         holder.startRideBtn.setVisibility(View.VISIBLE);
                         holder.startRideBtn.setOnClickListener(v -> {
-                            String statusField = isDriver ? "driverStatus" : "riderStatus";
                             proposalRef.child(statusField).setValue("accepted")
                                     .addOnSuccessListener(aVoid -> {
                                         Intent intent = new Intent(v.getContext(), LoadingActivity.class);
