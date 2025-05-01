@@ -299,6 +299,7 @@ public class LoadingActivity extends AppCompatActivity {
             driverAcceptedLayout.setVisibility(View.GONE);
             driverButtonContainer.setVisibility(View.GONE);
             riderButtonContainer.setVisibility(View.VISIBLE);
+            manageProposalButtons.setVisibility(View.GONE);
         }
     }
 
