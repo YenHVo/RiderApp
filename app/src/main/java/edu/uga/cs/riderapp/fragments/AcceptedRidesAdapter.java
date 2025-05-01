@@ -1,7 +1,6 @@
 package edu.uga.cs.riderapp.fragments;
 
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -124,33 +122,6 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
             // Set current user's status to "cancelled"
             proposalRef.child(statusField).setValue("cancelled")
                     .addOnSuccessListener(aVoid -> {
-                        // Remove from Firebase accepted_rides node
-                        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                        DatabaseReference acceptedRideRef = FirebaseDatabase.getInstance()
-                                .getReference("accepted_rides")
-                                .child(userId)
-                                .child(proposalId);
-
-                        acceptedRideRef.removeValue()
-                                .addOnSuccessListener(unused -> {
-                                    // Remove from list and notify UI
-                                    rides.remove(position);
-                                    notifyItemRemoved(position);
-                                    notifyItemRangeChanged(position, rides.size());
-
-                                    Toast.makeText(v.getContext(), "Ride at " + formattedDate + " has been cancelled.", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(v.getContext(), "Failed to remove ride from accepted list", Toast.LENGTH_SHORT).show();
-                                });
-                    });
-        });
-
-        /*
-        holder.cancelRideBtn.setOnClickListener(v -> {
-            // Set current user's status to "cancelled"
-            proposalRef.child(statusField).setValue("cancelled")
-                    .addOnSuccessListener(aVoid -> {
                         // Remove from list and notify UI
                         rides.remove(position);
                         notifyItemRemoved(position);
@@ -159,7 +130,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
                         // Toast cancellation
                         Toast.makeText(v.getContext(), "Ride at " + formattedDate + " has been cancelled.", Toast.LENGTH_SHORT).show();
                     });
-        });*/
+        });
     }
 
     /**
