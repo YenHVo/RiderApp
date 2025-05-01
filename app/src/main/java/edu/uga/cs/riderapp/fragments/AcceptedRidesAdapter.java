@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -70,17 +71,16 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
             holder.pointsTextView.setText("Points: " + points);
         }
 
+        boolean isDriver = ride.getPoints() != null && ride.getPoints() > 0;
+        String proposalId = ride.getProposalId();
+        DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
+
         // Show button only if current time > ride time
         if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
             holder.startRideBtn.setVisibility(View.VISIBLE);
 
             holder.startRideBtn.setOnClickListener(v -> {
-                boolean isDriver = ride.getPoints() != null && ride.getPoints() > 0;
-                String proposalId = ride.getProposalId();
-
-                DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
                 String statusField = isDriver ? "driverStatus" : "riderStatus";
-
                 proposalRef.child(statusField).setValue("accepted")
                         .addOnSuccessListener(aVoid -> {
                             Intent intent = new Intent(v.getContext(), LoadingActivity.class);
@@ -92,6 +92,23 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         } else {
             holder.startRideBtn.setVisibility(View.GONE);
         }
+
+        // Cancel Button behavior
+        holder.cancelRideBtn.setOnClickListener(v -> {
+            String statusField = isDriver ? "driverStatus" : "riderStatus";
+
+            // Set current user's status to "cancelled"
+            proposalRef.child(statusField).setValue("cancelled")
+                    .addOnSuccessListener(aVoid -> {
+                        // Remove from list and notify UI
+                        rides.remove(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, rides.size());
+
+                        // Toast cancellation
+                        Toast.makeText(v.getContext(), "Ride at " + formattedDate + " has been cancelled.", Toast.LENGTH_SHORT).show();
+                    });
+        });
     }
 
     /**
@@ -111,6 +128,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         TextView dateTimeTextView;
         TextView pointsTextView;
         Button startRideBtn;
+        Button cancelRideBtn;
 
         /**
          * Constructor binds the views from the ride_item layout.
@@ -122,6 +140,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
             dateTimeTextView = itemView.findViewById(R.id.date_time);
             pointsTextView = itemView.findViewById(R.id.points);
             startRideBtn = itemView.findViewById(R.id.startRideBtn);
+            cancelRideBtn = itemView.findViewById(R.id.cancelRideBtn);
         }
     }
 

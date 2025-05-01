@@ -91,5 +91,4 @@ public class AcceptedRidesFragment extends Fragment {
             }
         });
     }
-
 }
