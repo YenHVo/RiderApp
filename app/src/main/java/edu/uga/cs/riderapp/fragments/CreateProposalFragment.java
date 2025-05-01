@@ -5,6 +5,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
@@ -54,6 +55,7 @@ public class CreateProposalFragment extends Fragment {
     private Button selectTimeButton;
     private TextView dateTimeDisplay;
     private Calendar selectedDateTime;
+    private User currentUser;
 
     public CreateProposalFragment() {
         // Required empty public constructor
@@ -109,6 +111,7 @@ public class CreateProposalFragment extends Fragment {
      * Creates a ride proposal after validating input fields and user eligibility.
      * Sends the proposal data to Firebase.
      */
+    /*
     private void createProposal() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
@@ -242,6 +245,111 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
             clearForm();
         }
+    }*/
+    private void createProposal() {
+        getCurrentUser(currentUser -> {
+            if (currentUser == null) {
+                Toast.makeText(getContext(), "Failed to fetch user info", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String startLocation = startLocationEdit.getText().toString().trim();
+            String endLocation = endLocationEdit.getText().toString().trim();
+
+            if (startLocation.isEmpty() || endLocation.isEmpty()) {
+                Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (selectedDateTime == null) {
+                Toast.makeText(getContext(), "Please select a valid date and time", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            long dateTimeMillis = selectedDateTime.getTimeInMillis();
+            int checkedRadioButtonId = proposalTypeGroup.getCheckedRadioButtonId();
+            if (checkedRadioButtonId == -1) {
+                Toast.makeText(getContext(), "Please select a proposal type (offer or request)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            boolean isOffer = checkedRadioButtonId == R.id.offerRadio;
+
+            if (!isOffer) {
+                // Rider - check points
+                DatabaseReference userRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(currentUser.getUserId())
+                        .child("points");
+
+                userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        long points = snapshot.getValue(Long.class) != null ? snapshot.getValue(Long.class) : 0;
+
+                        if (points < 100) {
+                            Toast.makeText(getContext(), "Not enough points. Give a ride to earn more.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        Proposal proposal = new Proposal(
+                                "request",
+                                startLocation,
+                                endLocation,
+                                null,
+                                currentUser.getUserId(),
+                                null,
+                                0,
+                                dateTimeMillis
+                        );
+                        proposal.setRiderName(currentUser.getName());
+
+                        saveProposal(proposal, false);
+                        Toast.makeText(getContext(), "Ride request created!", Toast.LENGTH_SHORT).show();
+                        clearForm();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Toast.makeText(getContext(), "Failed to check points", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                // Driver
+                String carModel = carModelEdit.getText().toString().trim();
+                String seatsStr = availableSeatsEdit.getText().toString().trim();
+
+                if (carModel.isEmpty() || seatsStr.isEmpty()) {
+                    Toast.makeText(getContext(), "Please fill all car details", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                int availableSeats;
+                try {
+                    availableSeats = Integer.parseInt(seatsStr);
+                    if (availableSeats <= 0) throw new NumberFormatException();
+                } catch (NumberFormatException e) {
+                    Toast.makeText(getContext(), "Invalid seat count", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Proposal proposal = new Proposal(
+                        "offer",
+                        startLocation,
+                        endLocation,
+                        currentUser.getUserId(),
+                        null,
+                        carModel,
+                        availableSeats,
+                        dateTimeMillis
+                );
+                proposal.setDriverName(currentUser.getName());
+
+                saveProposal(proposal, true);
+                Toast.makeText(getContext(), "Ride offer created!", Toast.LENGTH_SHORT).show();
+                clearForm();
+            }
+        });
     }
 
     /**
@@ -294,21 +402,40 @@ public class CreateProposalFragment extends Fragment {
      * Builds a User object from the currently authenticated Firebase user.
      * @return User object or null if not authenticated.
      */
-    private User getCurrentUser() {
+    private void getCurrentUser(UserCallback callback) {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser != null) {
-            return new User(
-                    firebaseUser.getUid(),
-                    firebaseUser.getEmail(),
-                    firebaseUser.getDisplayName() != null ?
-                            firebaseUser.getDisplayName() :
-                            firebaseUser.getEmail() != null ?
-                                    firebaseUser.getEmail().split("@")[0] : "User",
-                    0,
-                    new Date()
-            );
+        if (firebaseUser == null) {
+            callback.onUserResult(null);
+            return;
         }
-        return null;
+
+        String uid = firebaseUser.getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name = snapshot.child("name").getValue(String.class);
+                String email = snapshot.child("email").getValue(String.class);
+
+                if (name == null || email == null) {
+                    callback.onUserResult(null);
+                    return;
+                }
+
+                User user = new User(uid, email, name, 0, new Date());
+                callback.onUserResult(user);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onUserResult(null);
+            }
+        });
+    }
+
+    public interface UserCallback {
+        void onUserResult(User user);
     }
 
     /**
