@@ -4,6 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Represents a completed ride history record between a driver and a rider.
+ * Stores key metadata such as participants, route, role, date/time, and status.
+ */
 public class RideHistory {
 
     private String driverId;
@@ -14,14 +18,15 @@ public class RideHistory {
     private String endLocation;
     private String role;
     private long dateTime;
-
     private String status;
 
+    /**
+     * Default constructor.
+     */
     public RideHistory() {
-
     }
 
-
+    // Getters and Setters
     public String getDriverId() { return driverId; }
     public void setDriverId(String driverId) { this.driverId = driverId; }
 
@@ -52,6 +57,11 @@ public class RideHistory {
         this.status = status;
     }
 
+    /**
+     * Converts the stored timestamp to a formatted date string.
+     *
+     * @return a readable date-time string in "MM/dd/yyyy HH:mm" format
+     */
     public String getDate() {
         // Create a Date object from the timestamp
         Date date = new Date(dateTime);

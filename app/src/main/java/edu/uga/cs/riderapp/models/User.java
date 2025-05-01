@@ -1,30 +1,36 @@
 package edu.uga.cs.riderapp.models;
 
-
 import java.util.Date;
 
+/**
+ * Represents a user in the RiderApp system.
+ * Stores information such as user ID, email, display name, points, and registration date.
+ */
 public class User {
     private String userId;
     private String email;
     private String name;
-
     private long points;
     private Date createdAt;
 
+    /**
+     * Default constructor required for Firebase deserialization.
+     * Initializes points to 0 and sets the current date as createdAt.
+     */
     public User() {
-
         this.points = 0;
         this.createdAt = new Date();
     }
 
-    public User(String email, String name) {
-        this.email = email;
-        this.name = name;
-
-        this.points = 0;
-        this.createdAt = new Date();
-    }
-
+    /**
+     * Full constructor for restoring a user with all attributes.
+     *
+     * @param userId    Unique user ID (UID from Firebase).
+     * @param email     User's email.
+     * @param name      Display name.
+     * @param points    Accumulated ride points.
+     * @param createdAt Date when the account was created.
+     */
     public User(String userId, String email, String name, long points, Date createdAt) {
         this.userId = userId;
         this.email = email;
@@ -38,7 +44,6 @@ public class User {
     public String getUserId() {
         return userId;
     }
-
     public void setUserId(String userId) {
         this.userId = userId;
     }
@@ -46,7 +51,6 @@ public class User {
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }

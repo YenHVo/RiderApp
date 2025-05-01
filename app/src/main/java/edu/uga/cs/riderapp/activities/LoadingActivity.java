@@ -1,6 +1,5 @@
 package edu.uga.cs.riderapp.activities;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -11,8 +10,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,37 +19,36 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import edu.uga.cs.riderapp.activities.HomeActivity;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.Ride;
-import edu.uga.cs.riderapp.models.RideHistory;
-import edu.uga.cs.riderapp.models.User;
 
-
+/**
+ * LoadingActivity handles the state of a ride proposal between a rider and driver.
+ * It manages UI changes based on the current status of the proposal and user role.
+ * The activity supports accepting/rejecting proposals, marking rides as completed,
+ * saving history, updating points, and transitioning between Firebase data states.
+ */
 public class LoadingActivity extends AppCompatActivity {
 
     private String proposalId;
     private boolean isDriver;
     private String currentUserId;
+    private DatabaseReference proposalRef;
 
+    // UI elements
     private ProgressBar progressBar;
     private ImageButton backButton;
     private TextView loadingText, subText;
@@ -64,12 +60,12 @@ public class LoadingActivity extends AppCompatActivity {
     private Button returnHomeButton;
     private LinearLayout dualButtonContainer;
     private Button cancelButton, completeButton;
-    private DatabaseReference proposalRef;
-
     private Button updateProposalButton, deleteProposalButton;
     private LinearLayout manageProposalButtons;
 
-
+    /**
+     * Called when the activity is created. Initializes UI and loads proposal data.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +77,7 @@ public class LoadingActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get intent data and current user ID
         proposalId = getIntent().getStringExtra("proposalId");
         isDriver = getIntent().getBooleanExtra("isDriver", false);
         currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ?
@@ -91,11 +88,15 @@ public class LoadingActivity extends AppCompatActivity {
             return;
         }
 
+        // Initializes UI elements and sets up listeners
         initializeViews();
         setupButtonListeners();
         setupDatabaseListener();
     }
 
+    /**
+     * Finds and assigns views from the layout.
+     */
     private void initializeViews() {
         progressBar = findViewById(R.id.progressBar);
         loadingText = findViewById(R.id.loadingText);
@@ -121,6 +122,9 @@ public class LoadingActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Sets up button click listeners for user interactions.
+     */
     private void setupButtonListeners() {
         backButton.setOnClickListener(v -> cancelProposal());
         returnHomeButton.setOnClickListener(v -> navigateToHome());
@@ -131,26 +135,50 @@ public class LoadingActivity extends AppCompatActivity {
         riderRejectButton.setOnClickListener(v -> rejectProposal());
         updateProposalButton.setOnClickListener(v -> updateProposal());
         deleteProposalButton.setOnClickListener(v -> deleteProposal());
-
     }
 
+    /**
+     * Attaches a listener to the proposal data in Firebase.
+     * Responds to changes in ride match status and updates UI accordingly.
+     */
     private void setupDatabaseListener() {
         proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
-
         proposalRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     Proposal proposal = snapshot.getValue(Proposal.class);
                     if (proposal != null) {
+                        // Handles and displays screen depending on statuses of both rider and driver
                         String driverStatus = proposal.getDriverStatus();
                         String riderStatus = proposal.getRiderStatus();
 
-                        if ("completed".equals(driverStatus) && "completed".equals(riderStatus)) {
-                            showCompletedScreen();
+                        // User created a new proposal
+                        if ("pending".equals(driverStatus) && "pending".equals(riderStatus)) {
+                            showInitialWaitingState();
                             return;
                         }
 
+                        // User accepted a proposal from the list and is waiting for a confirmation
+                        if ("accepted".equals(isDriver ? driverStatus : riderStatus) &&
+                                "pending".equals(isDriver ? riderStatus : driverStatus)) {
+                            showWaitingForConfirmationState();
+                            return;
+                        }
+
+                        // User who created proposal needs to confirm the other user
+                        /*
+                        if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {
+                            showConfirmationScreen(proposal);
+                            return;
+                        }*/
+                        if ("accepted".equals(isDriver ? proposal.getRiderStatus() : proposal.getDriverStatus()) &&
+                                "pending".equals(isDriver ? proposal.getDriverStatus() : proposal.getRiderStatus())) {
+                            showConfirmationScreen(proposal);
+                            return;
+                        }
+
+                        // Both users are in a ride state and are waiting until the ride is completed
                         if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
                             long currentTimeMillis = System.currentTimeMillis();
                             long rideTimeMillis = proposal.getDateTime();
@@ -164,19 +192,9 @@ public class LoadingActivity extends AppCompatActivity {
                             }
                         }
 
-                        if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {
-                            showConfirmationScreen(proposal);
-                            return;
-                        }
-
-                        if ("accepted".equals(isDriver ? driverStatus : riderStatus) &&
-                                "pending".equals(isDriver ? riderStatus : driverStatus)) {
-                            showWaitingForConfirmationState();
-                            return;
-                        }
-
-                        if ("pending".equals(driverStatus) && "pending".equals(riderStatus)) {
-                            showInitialWaitingState();
+                        // Both users confirm the ride is completed and are taken to the ending screen
+                        if ("completed".equals(driverStatus) && "completed".equals(riderStatus)) {
+                            showCompletedScreen();
                         }
                     }
                 }
@@ -189,16 +207,26 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Helper method to check if the other party has accepted the proposal.
+     */
     private boolean isOtherPartyAccepted(Proposal proposal) {
         return isDriver ? "accepted".equals(proposal.getRiderStatus()) :
                 "accepted".equals(proposal.getDriverStatus());
     }
 
+    /**
+     * Helper method to check if the current user's proposal status is still pending.
+     */
     private boolean isMyStatusPending(Proposal proposal) {
         return isDriver ? "pending".equals(proposal.getDriverStatus()) :
                 "pending".equals(proposal.getRiderStatus());
     }
 
+    /**
+     * Displays the initial waiting state where no match has yet been accepted.
+     * Shows the loading indicator and hides all action buttons.
+     */
     private void showInitialWaitingState() {
         progressBar.setVisibility(View.VISIBLE);
         loadingText.setVisibility(View.VISIBLE);
@@ -216,6 +244,9 @@ public class LoadingActivity extends AppCompatActivity {
         manageProposalButtons.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Shows a waiting screen when the user has accepted but is waiting for the other user to confirm.
+     */
     private void showWaitingForConfirmationState() {
         progressBar.setVisibility(View.VISIBLE);
         loadingText.setVisibility(View.VISIBLE);
@@ -232,6 +263,12 @@ public class LoadingActivity extends AppCompatActivity {
         manageProposalButtons.setVisibility(View.GONE);
     }
 
+    /**
+     * Displays a confirmation screen when the other user has accepted and this user needs to respond.
+     * Populates the layout with ride details depending on user role.
+     *
+     * @param proposal The current proposal containing ride details.
+     */
     private void showConfirmationScreen(Proposal proposal) {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
@@ -241,8 +278,8 @@ public class LoadingActivity extends AppCompatActivity {
         dualButtonContainer.setVisibility(View.GONE);
 
         String otherUserName = isDriver ? proposal.getRiderName() : proposal.getDriverName();
-
         String details;
+
         if (isDriver) {
             // Display rider details
             details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
@@ -273,16 +310,27 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Shows the screen when both users have accepted the ride and the time has passed.
+     * Displays final ride details and gives option to complete or cancel.
+     *
+     * @param proposal The current proposal.
+     */
     private void showAcceptedScreen(Proposal proposal) {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.GONE);
         subText.setVisibility(View.GONE);
         backButton.setVisibility(View.GONE);
         manageProposalButtons.setVisibility(View.GONE);
+        driverButtonContainer.setVisibility(View.GONE);
+        riderButtonContainer.setVisibility(View.GONE);
+        returnHomeButton.setVisibility(View.GONE);
+        cancelButton.setVisibility(View.GONE);
+        dualButtonContainer.setVisibility(View.VISIBLE);
 
         String otherUserName = isDriver ? proposal.getRiderName() : proposal.getDriverName();
-
         String details;
+
         if (isDriver) {
             // Display rider details
             details = String.format("Rider: %s\nPickup: %s\nDropoff: %s",
@@ -306,13 +354,11 @@ public class LoadingActivity extends AppCompatActivity {
             riderMatchDetails.setText(details);
             driverAcceptedLayout.setVisibility(View.GONE);
         }
-        driverButtonContainer.setVisibility(View.GONE);
-        riderButtonContainer.setVisibility(View.GONE);
-        returnHomeButton.setVisibility(View.GONE);
-        cancelButton.setVisibility(View.GONE);
-        dualButtonContainer.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Displays a completed ride message and disables interaction.
+     */
     private void showCompletedScreen() {
         progressBar.setVisibility(View.GONE);
         loadingText.setVisibility(View.VISIBLE);
@@ -336,6 +382,9 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Opens a dialog that allows the driver to update the ride proposal information (location, date, time).
+     */
     private void updateProposal() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Update Proposal");
@@ -401,10 +450,12 @@ public class LoadingActivity extends AppCompatActivity {
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
+    /**
+     * Deletes the current proposal from Firebase.
+     */
     private void deleteProposal() {
         if (proposalRef != null) {
             proposalRef.removeValue()
@@ -418,6 +469,9 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Marks the current user (driver or rider) as having accepted the proposal.
+     */
     private void acceptProposal() {
         String statusField = isDriver ? "driverStatus" : "riderStatus";
 
@@ -430,8 +484,12 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
-
-
+    /**
+     * Transfers the current proposal into the 'accepted_rides' path in Firebase
+     * and removes it from 'offered_rides' or 'requested_rides' depending on user role.
+     *
+     * @param snapshot The current proposal's Firebase snapshot.
+     */
     private void moveRideToAccepted(DataSnapshot snapshot) {
         String proposalId = proposalRef.getKey();
         String driverId = snapshot.child("driverId").getValue(String.class);
@@ -444,20 +502,21 @@ public class LoadingActivity extends AppCompatActivity {
 
         DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
 
+        // Create a Ride object for the driver
         Ride acceptedRide = new Ride();
         acceptedRide.setProposalId(proposalId);
         acceptedRide.setDriverId(driverId);
         acceptedRide.setRiderId(riderId);
-
         acceptedRide.setStartLocation(snapshot.child("startLocation").getValue(String.class));
         acceptedRide.setEndLocation(snapshot.child("endLocation").getValue(String.class));
         acceptedRide.setDateTime(snapshot.child("dateTime").getValue(Long.class));
 
-        acceptedRide.setPoints(100L); // Points for the driver
-
+        // Setting the points based on whether it was a ride request or offer
+        acceptedRide.setPoints(100L);
         Ride acceptedRideForRider = new Ride(acceptedRide);
-        acceptedRideForRider.setPoints(-100L); // Points for the rider
+        acceptedRideForRider.setPoints(-100L);
 
+        // Save rides in accepted_rides
         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRideForRider);
 
@@ -475,6 +534,10 @@ public class LoadingActivity extends AppCompatActivity {
         navigateToHome();
     }
 
+    /**
+     * Resets both the driver and rider status back to "pending",
+     * effectively declining the current proposal.
+     */
     private void rejectProposal() {
         // Reset both statuses to pending
         proposalRef.child("driverStatus").setValue("pending");
@@ -485,9 +548,12 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Sets the current user's status to "completed" and checks if both parties
+     * have completed to trigger the ride finalization.
+     */
     private void markRideCompleted() {
         if (proposalRef == null) return;
-
         String statusField = isDriver ? "driverStatus" : "riderStatus";
 
         proposalRef.child(statusField).setValue("completed")
@@ -500,6 +566,9 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Cancels the current proposal by setting its status to "cancelled".
+     */
     private void cancelProposal() {
         if (proposalRef != null) {
             proposalRef.child("status").setValue("cancelled")
@@ -511,7 +580,10 @@ public class LoadingActivity extends AppCompatActivity {
         }
     }
 
-
+    /**
+     * Checks if both driver and rider have marked the ride as completed.
+     * If so, it finalizes the ride and updates the database accordingly.
+     */
     private void checkAndSaveIfBothCompleted() {
         proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -538,10 +610,15 @@ public class LoadingActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Saves a completed ride to each user's ride history.
+     * Retrieves and stores minimal ride details (location, time, role).
+     */
     private void saveRideToHistory() {
         if (proposalRef == null) return;
 
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        //currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String rideId = proposalRef.getKey();
 
         if (rideId == null || currentUserId == null) {
@@ -595,8 +672,10 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
-
-
+    /**
+     * Updates the point totals of both users after a completed ride.
+     * Drivers gain points, riders lose points (down to a minimum of 0).
+     */
     private void updatePointsAfterRide(String driverId, String riderId) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
@@ -621,6 +700,10 @@ public class LoadingActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Removes rides from the "accepted_rides" path in Firebase if their time has already passed.
+     * This keeps the active rides list clean.
+     */
     private void removeCompletedRides() {
         DatabaseReference acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
 
@@ -666,6 +749,9 @@ public class LoadingActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Navigates the user back to the home screen.
+     */
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

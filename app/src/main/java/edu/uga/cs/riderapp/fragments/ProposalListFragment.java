@@ -1,11 +1,9 @@
 package edu.uga.cs.riderapp.fragments;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,43 +23,36 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.uga.cs.riderapp.R;
-import edu.uga.cs.riderapp.activities.HomeActivity;
 import edu.uga.cs.riderapp.activities.LoadingActivity;
-import edu.uga.cs.riderapp.fragments.placeholder.PlaceholderContent;
 import edu.uga.cs.riderapp.models.Proposal;
-import edu.uga.cs.riderapp.models.User;
 
 /**
- * A fragment representing a list of Items.
+ * Fragment that displays a list of pending ride proposals for either riders or drivers.
+ * Handles accepting and confirming proposals through Firebase.
  */
 public class ProposalListFragment extends Fragment {
 
+    /*
     private static final String ARG_RIDER_ID = "riderId";
     private static final String ARG_DRIVER_ID = "driverId";
     private String currentRiderId;
-    private String currentDriverId;
+    private String currentDriverId;*/
     private RecyclerView recyclerView;
     private ProposalRecyclerViewAdapter adapter;
     private List<Proposal> proposals = new ArrayList<>();
     private DatabaseReference proposalsRef;
     private ValueEventListener proposalsListener;
-    private Calendar selectedDateTime = Calendar.getInstance();
 
-
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
     public ProposalListFragment() {
+        // Required empty public constructor
     }
 
-
+    /*
     @SuppressWarnings("unused")
     public static ProposalListFragment newInstance(String riderId, String driverId) {
         ProposalListFragment fragment = new ProposalListFragment();
@@ -84,8 +75,11 @@ public class ProposalListFragment extends Fragment {
             currentRiderId = getArguments().getString(ARG_RIDER_ID);
             currentDriverId = getArguments().getString(ARG_DRIVER_ID);
         }
-    }
+    }*/
 
+    /**
+     * Sets up the RecyclerView and its adapter, and initializes Firebase listeners.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -95,6 +89,9 @@ public class ProposalListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new ProposalRecyclerViewAdapter(proposals, new ProposalRecyclerViewAdapter.OnProposalClickListener() {
+            /**
+             * Handles the Accept button logic for a proposal.
+             */
             @Override
             public void onAcceptClick(Proposal proposal) {
                 FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -115,7 +112,6 @@ public class ProposalListFragment extends Fragment {
                         .child(proposal.getProposalId());
 
                 Map<String, Object> updates = new HashMap<>();
-
                 if (isDriver) {
                     // Driver accepting a rider request
                     updates.put("driverId", currentUserId);
@@ -134,6 +130,7 @@ public class ProposalListFragment extends Fragment {
                         .addOnSuccessListener(aVoid -> {
                             checkBothUsersConfirmed(proposal);
 
+                            // Navigate to loading activity
                             Intent intent = new Intent(getActivity(), LoadingActivity.class);
                             intent.putExtra("proposalId", proposal.getProposalId());
                             intent.putExtra("isDriver", isDriver);
@@ -156,6 +153,9 @@ public class ProposalListFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Checks if both users have accepted and confirms the proposal.
+     */
     private void checkBothUsersConfirmed(Proposal proposal) {
         DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposal.getProposalId());
 
@@ -164,7 +164,6 @@ public class ProposalListFragment extends Fragment {
             public void onDataChange(DataSnapshot snapshot) {
                 String driverStatus = snapshot.child("driverStatus").getValue(String.class);
                 String riderStatus = snapshot.child("riderStatus").getValue(String.class);
-
 
                 // If both driver and rider have accepted, update the status to 'confirmed'
                 if ("accepted".equals(driverStatus) && "accepted".equals(riderStatus)) {
@@ -184,6 +183,9 @@ public class ProposalListFragment extends Fragment {
         });
     }
 
+    /**
+     * Loads pending proposals from Firebase and populates the list.
+     */
     private void loadProposalsFromFirebase() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -218,7 +220,7 @@ public class ProposalListFragment extends Fragment {
                             dateTimeMillis = 0L; // fallback
                         }
 
-                        Proposal proposal = new Proposal();  // Now create it early
+                        Proposal proposal = new Proposal();
 
                         if (type == null || (!type.equals("offer") && !type.equals("request"))) {
                             Log.e("ProposalListFragment", "Invalid or missing type at key: " + proposalId);
@@ -230,6 +232,7 @@ public class ProposalListFragment extends Fragment {
                         proposal.setEndLocation(endLocation);
                         proposal.setDateTime(dateTimeMillis);
 
+                        // Handle offer-specific data
                         if ("offer".equals(type)) {
                             String carModel = proposalSnap.child("carModel").getValue(String.class);
                             Integer seats = proposalSnap.child("seatsAvailable").getValue(Integer.class);
@@ -244,6 +247,7 @@ public class ProposalListFragment extends Fragment {
                                 continue;
                             }
                         } else if ("request".equals(type)) {
+                            // Handle request-specific data
                             String riderId = proposalSnap.child("riderId").getValue(String.class);
                             proposal.setRiderId(riderId);
 
@@ -260,6 +264,7 @@ public class ProposalListFragment extends Fragment {
                         proposal.setDriverStatus(driverStatus != null ? driverStatus : "pending");
                         proposal.setRiderStatus(riderStatus != null ? riderStatus : "pending");
 
+                        // Add only if both statuses are still pending
                         if ("pending".equals(proposal.getDriverStatus()) && "pending".equals(proposal.getRiderStatus())) {
                             proposals.add(proposal);
                         }
@@ -286,6 +291,9 @@ public class ProposalListFragment extends Fragment {
         }
     }
 
+    /**
+     * Removes the Firebase listener when the fragment is stopped.
+     */
     @Override
     public void onStop() {
         super.onStop();
@@ -295,6 +303,9 @@ public class ProposalListFragment extends Fragment {
         }
     }
 
+    /**
+     * Cleans up the RecyclerView and Firebase listeners on view destruction.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -305,6 +316,5 @@ public class ProposalListFragment extends Fragment {
         proposals.clear();
         adapter.notifyDataSetChanged();
     }
-
 }
 

@@ -1,9 +1,11 @@
 package edu.uga.cs.riderapp.models;
 
 import com.google.firebase.database.DataSnapshot;
-import androidx.recyclerview.widget.RecyclerView;
 
-
+/**
+ * Represents a ride model in the application, shared between a driver and rider.
+ * Contains details such as users involved, route, timing, and points.
+ */
 public class Ride {
     private String driverId;
     private String riderId;
@@ -16,10 +18,26 @@ public class Ride {
     private String driverEmail;
     private String riderEmail;
 
-    // Default constructor for Firebase
-    public Ride() {}
+    /**
+     * Default constructor.
+     */
+    public Ride() {
+    }
 
-    // Constructor
+    /**
+     * Constructs a Ride object with all fields.
+     *
+     * @param driverId      Firebase UID of the driver
+     * @param riderId       Firebase UID of the rider
+     * @param startLocation Ride start location
+     * @param endLocation   Ride end location
+     * @param dateTime      Scheduled ride time in epoch milliseconds
+     * @param points        Points awarded (positive for driver, negative for rider)
+     * @param status        Optional status (e.g., "completed", "active")
+     * @param proposalId    Associated proposal ID
+     * @param driverEmail   Driver's email (for history/logging)
+     * @param riderEmail    Rider's email (for history/logging)
+     */
     public Ride(String driverId, String riderId, String startLocation, String endLocation, Long dateTime, Long points, String status, String proposalId, String driverEmail, String riderEmail) {
         this.driverId = driverId;
         this.riderId = riderId;
@@ -33,7 +51,11 @@ public class Ride {
         this.riderEmail = riderEmail;
     }
 
-    // Copy constructor
+    /**
+     * Copy constructor for creating a duplicate Ride object.
+     *
+     * @param other The Ride object to copy from.
+     */
     public Ride(Ride other) {
         if (other == null) return;
 
@@ -80,9 +102,5 @@ public class Ride {
     public String getRiderEmail() { return riderEmail; }
     public void setRiderEmail(String riderEmail) { this.riderEmail = riderEmail; }
 
-    // This method is used by Firebase to map the data to the model
-    public static Ride getValue(DataSnapshot snapshot) {
-        return snapshot.getValue(Ride.class);
-    }
 }
 

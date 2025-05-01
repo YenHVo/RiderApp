@@ -12,18 +12,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import edu.uga.cs.riderapp.R;
-import edu.uga.cs.riderapp.activities.HomeActivity;
 import edu.uga.cs.riderapp.activities.LoadingActivity;
-import edu.uga.cs.riderapp.activities.MainActivity;
 import edu.uga.cs.riderapp.models.Proposal;
 import edu.uga.cs.riderapp.models.User;
 
@@ -40,11 +36,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link CreateProposalFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * Fragment allowing users to create a ride proposal, either as a rider (request) or driver (offer).
+ * Handles form input, validation, and saving proposal data to Firebase Realtime Database.
  */
 public class CreateProposalFragment extends Fragment {
 
@@ -61,51 +55,31 @@ public class CreateProposalFragment extends Fragment {
     private TextView dateTimeDisplay;
     private Calendar selectedDateTime;
 
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     public CreateProposalFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment CreateProposalFragment.
-     */
-    // TODO: Rename and change types and number of parameters
+    /*
     public static CreateProposalFragment newInstance(String param1, String param2) {
         CreateProposalFragment fragment = new CreateProposalFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
+    */
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
+    /**
+     * Inflates the fragment layout, initializes UI components,
+     * sets listeners, and prepares the proposal creation form.
+     *
+     * @param inflater LayoutInflater to inflate the view.
+     * @param container ViewGroup container.
+     * @param savedInstanceState Bundle of saved instance state.
+     * @return the root view of the fragment.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_create_proposal, container, false);
 
         // Initialize views
@@ -116,16 +90,11 @@ public class CreateProposalFragment extends Fragment {
         availableSeatsEdit = view.findViewById(R.id.availableSeatsEdit);
         carDetailsLayout = view.findViewById(R.id.carDetailsLayout);
         submitButton = view.findViewById(R.id.submitButton);
-
         selectDateButton = view.findViewById(R.id.selectDateButton);
         selectTimeButton = view.findViewById(R.id.selectTimeButton);
         dateTimeDisplay = view.findViewById(R.id.dateTimeDisplay);
 
-        selectedDateTime = Calendar.getInstance();  // Initialize
-
-        selectDateButton.setOnClickListener(v -> showDatePickerDialog());
-        selectTimeButton.setOnClickListener(v -> showTimePickerDialog());
-
+        selectedDateTime = Calendar.getInstance();
 
         // Handle proposal type change
         proposalTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
@@ -136,11 +105,18 @@ public class CreateProposalFragment extends Fragment {
             }
         });
 
-
+        // Set Listeners
+        selectDateButton.setOnClickListener(v -> showDatePickerDialog());
+        selectTimeButton.setOnClickListener(v -> showTimePickerDialog());
         submitButton.setOnClickListener(v -> createProposal());
+
         return view;
     }
 
+    /**
+     * Creates a ride proposal after validating input fields and user eligibility.
+     * Sends the proposal data to Firebase.
+     */
     private void createProposal() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
@@ -155,12 +131,13 @@ public class CreateProposalFragment extends Fragment {
             Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
+
         if (selectedDateTime == null) {
             Toast.makeText(getContext(), "Please select a valid date and time", Toast.LENGTH_SHORT).show();
             return;
         }
-        long dateTimeMillis = selectedDateTime.getTimeInMillis();
 
+        long dateTimeMillis = selectedDateTime.getTimeInMillis();
         int checkedRadioButtonId = proposalTypeGroup.getCheckedRadioButtonId();
         if (checkedRadioButtonId == -1) {
             Toast.makeText(getContext(), "Please select a proposal type (offer or request)", Toast.LENGTH_SHORT).show();
@@ -168,7 +145,6 @@ public class CreateProposalFragment extends Fragment {
         }
 
         boolean isOffer = proposalTypeGroup.getCheckedRadioButtonId() == R.id.offerRadio;
-
         if (!isOffer) {
             // Request proposal (rider)
             DatabaseReference userRef = FirebaseDatabase.getInstance()
@@ -202,13 +178,14 @@ public class CreateProposalFragment extends Fragment {
                             "request",
                             startLocation,
                             endLocation,
-                            null, // riderId will be set later
-                            currentUser.getUserId(), // This should be set as riderId here
+                            null,
+                            currentUser.getUserId(),
                             null,
                             0,
                             dateTimeMillis
                     );
 
+                    // Ensure riderId exists for requests
                     if (proposal.getRiderId() == null) {
                         Toast.makeText(getContext(), "Request missing riderId!", Toast.LENGTH_SHORT).show();
                         Log.e("CreateProposal", "Request missing riderId");
@@ -254,8 +231,8 @@ public class CreateProposalFragment extends Fragment {
                     "offer",
                     startLocation,
                     endLocation,
-                    currentUser.getUserId(), // This should be set as driverId here
-                    null, // riderId will be set later
+                    currentUser.getUserId(),
+                    null,
                     carModel,
                     availableSeats,
                     dateTimeMillis
@@ -275,7 +252,9 @@ public class CreateProposalFragment extends Fragment {
         }
     }
 
-
+    /**
+     * Displays a date picker dialog and updates the calendar object.
+     */
     private void showDatePickerDialog() {
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 getContext(),
@@ -292,6 +271,9 @@ public class CreateProposalFragment extends Fragment {
         datePickerDialog.show();
     }
 
+    /**
+     * Displays a time picker dialog and updates the calendar object.
+     */
     private void showTimePickerDialog() {
         TimePickerDialog timePickerDialog = new TimePickerDialog(
                 getContext(),
@@ -307,12 +289,19 @@ public class CreateProposalFragment extends Fragment {
         timePickerDialog.show();
     }
 
+    /**
+     * Formats the selected date/time and displays it in the UI.
+     */
     private void updateDateTimeDisplay() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         String formatted = sdf.format(selectedDateTime.getTime());
         dateTimeDisplay.setText(formatted);
     }
 
+    /**
+     * Builds a User object from the currently authenticated Firebase user.
+     * @return User object or null if not authenticated.
+     */
     private User getCurrentUser() {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser != null) {
@@ -330,6 +319,11 @@ public class CreateProposalFragment extends Fragment {
         return null;
     }
 
+    /**
+     * Saves a Proposal object to Firebase and navigates to the loading screen.
+     * @param proposal the Proposal to save.
+     * @param isDriver whether the user is acting as a driver.
+     */
     private void saveProposal(Proposal proposal, boolean isDriver) {
         DatabaseReference proposalsRef = FirebaseDatabase.getInstance().getReference("proposals");
         String proposalId = proposalsRef.push().getKey();
@@ -339,8 +333,6 @@ public class CreateProposalFragment extends Fragment {
         }
 
         proposal.setProposalId(proposalId);
-
-
         proposalsRef.child(proposalId).setValue(proposal)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Proposal created successfully!", Toast.LENGTH_SHORT).show();
@@ -356,7 +348,10 @@ public class CreateProposalFragment extends Fragment {
                 });
     }
 
-        private void clearForm() {
+    /**
+     * Clears all input fields in the form.
+     */
+    private void clearForm() {
         startLocationEdit.setText("");
         endLocationEdit.setText("");
         carModelEdit.setText("");

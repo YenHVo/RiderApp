@@ -23,6 +23,10 @@ import java.util.List;
 import edu.uga.cs.riderapp.R;
 import edu.uga.cs.riderapp.models.Ride;
 
+/**
+ * Fragment to display a list of accepted rides for the currently logged-in user.
+ * Uses a RecyclerView to present rides stored in the "accepted_rides" node in Firebase.
+ */
 public class AcceptedRidesFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -34,12 +38,19 @@ public class AcceptedRidesFragment extends Fragment {
         // Required empty public constructor
     }
 
+    /**
+     * Called to have the fragment instantiate its user interface view.
+     *
+     * @param inflater           LayoutInflater object to inflate views.
+     * @param container          Parent view the fragment UI should be attached to.
+     * @param savedInstanceState Previous state (if any).
+     * @return The root view for the fragment's UI.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_accepted_rides, container, false);
-
         recyclerView = view.findViewById(R.id.recycler_view_accepted_rides);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -47,15 +58,16 @@ public class AcceptedRidesFragment extends Fragment {
         adapter = new AcceptedRidesAdapter(acceptedRidesList);
         recyclerView.setAdapter(adapter);
 
+        // Reference to the accepted rides node in Firebase
         acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
-
         loadAcceptedRides();
 
         return view;
     }
 
-
-
+    /**
+     * Loads accepted rides from Firebase for the current user and updates the adapter.
+     */
     private void loadAcceptedRides() {
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 

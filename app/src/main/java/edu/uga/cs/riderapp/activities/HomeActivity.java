@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,6 +29,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+/**
+ * HomeActivity is the main screen for authenticated users.
+ * It displays user-specific information such as name and points,
+ * and provides navigation to different parts of the app like profile,
+ * ride creation, proposal list, and accepted rides.
+ */
 public class HomeActivity extends AppCompatActivity {
 
     private TextView userNameTextView;
@@ -39,6 +44,11 @@ public class HomeActivity extends AppCompatActivity {
     private DatabaseReference userRef;
     private ValueEventListener userListener;
 
+    /**
+     * Called when the activity is created.
+     * Sets up the UI, initializes fragments, sets up button listeners,
+     * and attaches a Firebase listener to fetch user data.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,15 +60,20 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Initialize UI components
         userNameTextView = findViewById(R.id.userNameTextView);
         pointsTextView = findViewById(R.id.pointsTextView);
         logoutButton = findViewById(R.id.logoutButton);
 
+        // Load default fragment and set up listeners
         initializeFragment();
         setupButtonListeners();
         setupUserDataListener();
     }
 
+    /**
+     * Loads the default fragment (ProposalListFragment) if no fragment is currently loaded.
+     */
     private void initializeFragment() {
         if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) == null) {
             try {
@@ -71,7 +86,12 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sets click listeners for the profile, create ride, home, logout, and accepted rides buttons.
+     * Each listener performs a fragment transaction or authentication action.
+     */
     private void setupButtonListeners() {
+        // Open the Profile fragment
         findViewById(R.id.profileBtn).setOnClickListener(v -> {
             try {
                 getSupportFragmentManager().beginTransaction()
@@ -83,6 +103,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        // Open the CreateProposal fragment
         findViewById(R.id.createRideBtn).setOnClickListener(v -> {
             try {
                 getSupportFragmentManager().beginTransaction()
@@ -93,6 +114,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        // Returns to home fragment
         findViewById(R.id.homeBtn).setOnClickListener(v -> {
             try {
                 getSupportFragmentManager().beginTransaction()
@@ -103,6 +125,18 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        // Open the AcceptedRides fragment
+        findViewById(R.id.viewAcceptedRidesBtn).setOnClickListener(v -> {
+            try {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new AcceptedRidesFragment())
+                        .commit();
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Fragment transaction failed: " + e.getMessage());
+            }
+        });
+
+        // Log out the user
         logoutButton.setOnClickListener(v -> {
             if (userRef != null && userListener != null) {
                 userRef.removeEventListener(userListener);
@@ -114,28 +148,13 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-
-
-
-        findViewById(R.id.viewAcceptedRidesBtn).setOnClickListener(v -> {
-
-            AcceptedRidesFragment fragment = new AcceptedRidesFragment();
-
-
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-
-            transaction.replace(R.id.fragmentContainer, fragment);
-
-
-            transaction.addToBackStack(null);
-
-
-            transaction.commit();
-        });
     }
 
-
+    /**
+     * Sets up a Firebase listener to fetch and listen for real-time updates
+     * to the current user's data.
+     * Redirects to MainActivity if user is not logged in.
+     */
     private void setupUserDataListener() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
@@ -157,7 +176,6 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    // Get the User object from the snapshot
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
                         // Update the UI with the latest points and other data
@@ -180,8 +198,11 @@ public class HomeActivity extends AppCompatActivity {
         userRef.addValueEventListener(userListener);
     }
 
-
-
+    /**
+     * Updates the welcome message and point balance in the UI.
+     *
+     * @param user The user whose data is displayed.
+     */
     private void updateUI(User user) {
         if (user != null) {
             userNameTextView.setText("Welcome, " + user.getName() + "!");
@@ -189,54 +210,9 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void updateUserInfo() {
-        if (user != null) {
-            runOnUiThread(() -> {
-                userNameTextView.setText("Welcome, " + user.getName() + "!");
-                pointsTextView.setText(user.getPoints() + " points");
-                Log.d("HomeActivity", "UI updated - Points: " + user.getPoints());
-            });
-        } else {
-            Log.w("HomeActivity", "User object is null during update");
-        }
-    }
-
-
-    private void getCurrentUserFromFirebase() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String currentUserId = currentUser.getUid();
-            userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUserId);
-
-            // Use addValueEventListener instead of addListenerForSingleValueEvent
-            // to get real-time updates
-            userListener = userRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        user = snapshot.getValue(User.class);
-                        if (user != null) {
-                            // Force update the UI on the main thread
-                            runOnUiThread(() -> updateUserInfo());
-                        }
-                    } else {
-                        Toast.makeText(HomeActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Toast.makeText(HomeActivity.this, "Failed to load user data", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            Toast.makeText(HomeActivity.this, "No user logged in", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(HomeActivity.this, MainActivity.class));
-            finish();
-        }
-    }
-
-
+    /**
+     * Removes the Firebase event listener when the activity is destroyed.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -245,6 +221,10 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Called when the activity becomes visible. Checks if the user is still logged in.
+     * If not, redirects to the login screen.
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -252,8 +232,6 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }
-
-
     }
 }
 

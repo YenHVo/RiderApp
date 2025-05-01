@@ -17,12 +17,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 
-import edu.uga.cs.riderapp.fragments.RideHistoryAdapter;
 import edu.uga.cs.riderapp.models.RideHistory;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment that displays the user's ride history in a RecyclerView.
+ * Fetches data from Firebase Realtime Database and handles UI state when no data is present.
+ */
 public class ProfileFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -32,6 +35,18 @@ public class ProfileFragment extends Fragment {
     private DatabaseReference databaseReference;
     private TextView noHistoryTextView;
 
+    public ProfileFragment() {
+        // Required empty public constructor
+    }
+
+    /**
+     * Inflates the fragment layout, sets up UI and Firebase, and loads ride history.
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate views.
+     * @param container The parent view that the fragment UI should be attached to.
+     * @param savedInstanceState A saved state if any.
+     * @return The root view of this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -41,12 +56,11 @@ public class ProfileFragment extends Fragment {
 
         // Initialize UI elements
         recyclerView = view.findViewById(R.id.recyclerViewRideHistory);
+        noHistoryTextView = view.findViewById(R.id.textViewNoHistory);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         rideHistoryList = new ArrayList<>();
         adapter = new RideHistoryAdapter(rideHistoryList);
         recyclerView.setAdapter(adapter);
-
-        noHistoryTextView = view.findViewById(R.id.textViewNoHistory);
 
         // Initialize Firebase Auth and Database reference
         auth = FirebaseAuth.getInstance();
@@ -58,6 +72,10 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Loads the ride history of the currently logged-in user from Firebase Realtime Database.
+     * Updates the adapter and UI based on the data retrieved.
+     */
     private void loadRideHistory() {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) return;
@@ -65,7 +83,7 @@ public class ProfileFragment extends Fragment {
         String userId = user.getUid();
         rideHistoryList.clear();
 
-
+        // Query the ride history for the current user
         databaseReference.child(userId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -85,6 +103,9 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+    /**
+     * Checks if ride history is empty and shows/hides the corresponding message.
+     */
     private void checkIfHistoryIsEmpty() {
         // Show/hide the "no history" message
         if (rideHistoryList.isEmpty()) {

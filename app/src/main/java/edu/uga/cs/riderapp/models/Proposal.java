@@ -2,7 +2,10 @@ package edu.uga.cs.riderapp.models;
 
 import java.util.Date;
 
-
+/**
+ * Represents a ride proposal in the application, which can be either an offer from a driver
+ * or a request from a rider. Contains details like locations, time, participants, vehicle, and statuses.
+ */
 public class Proposal {
     private String proposalId;
     private String type;
@@ -21,6 +24,9 @@ public class Proposal {
     private String riderStatus;
     private String driverStatus;
 
+    /**
+     * Default constructor initializing defaults like creation time and status flags.
+     */
     public Proposal() {
         this.createdAt = new Date();
         this.riderStatus = "pending";
@@ -29,6 +35,18 @@ public class Proposal {
         this.confirmedByRider = false;
     }
 
+    /**
+     * Constructor for offers and requests.
+     *
+     * @param type           Type of the proposal ("offer" or "request").
+     * @param startLocation  Starting location of the ride.
+     * @param endLocation    Destination location of the ride.
+     * @param driverId       Firebase UID of the driver.
+     * @param riderId        Firebase UID of the rider.
+     * @param car            Car model used by the driver (if applicable).
+     * @param availableSeats Number of available seats in the car.
+     * @param dateTime       Scheduled time of the ride (in millis).
+     */
     public Proposal(String type, String startLocation, String endLocation,
                     String driverId, String riderId,String car, int availableSeats, long dateTime) {
         this.type = type;
@@ -46,26 +64,10 @@ public class Proposal {
         this.driverStatus = "pending";
     }
 
-    // For Riders
-    public Proposal(String type, String startLocation, String endLocation,
-                    String riderId, long dateTime) {
-        this.type = type;
-        this.startLocation = startLocation;
-        this.endLocation = endLocation;
-        this.riderId = riderId;
-        this.car = null;
-        this.riderStatus = "pending";
-        this.driverStatus = "pending";
-        this.createdAt = new Date();
-        this.dateTime = dateTime;
-        this.confirmedByDriver = false;
-        this.confirmedByRider = false;
-    }
-
+    // Getters and Setters
     public String getProposalId() {
         return proposalId;
     }
-
     public void setProposalId(String proposalId) {
         this.proposalId = proposalId;
     }
@@ -129,6 +131,7 @@ public class Proposal {
     public void setRiderName(String riderName) {
         this.riderName = riderName;
     }
+
     public String getCar() {
         return car;
     }
@@ -165,10 +168,6 @@ public class Proposal {
         this.dateTime = dateTime;
     }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public int getAvailableSeats() {
         return availableSeats;
     }
@@ -192,5 +191,4 @@ public class Proposal {
     public void setConfirmedByRider(Boolean confirmedByRider) {
         this.confirmedByRider = confirmedByRider;
     }
-
 }
