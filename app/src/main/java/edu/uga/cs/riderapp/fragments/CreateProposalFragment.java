@@ -399,8 +399,13 @@ public class CreateProposalFragment extends Fragment {
     }
 
     /**
-     * Builds a User object from the currently authenticated Firebase user.
-     * @return User object or null if not authenticated.
+     * Asynchronously retrieves the current user data from Firebase Realtime Database
+     * and returns it through a callback.
+     * This method checks the authenticated Firebase user and looks up their associated
+     * details (name and email) stored under the "users" node. If the user is not authenticated
+     * or the data is incomplete/missing, it returns {@code null} via the callback.
+     *
+     * @param callback A UserCallback interface that receives the {@link User} object
      */
     private void getCurrentUser(UserCallback callback) {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -434,6 +439,9 @@ public class CreateProposalFragment extends Fragment {
         });
     }
 
+    /**
+     * Callback interface used to return a User object asynchronously.
+     */
     public interface UserCallback {
         void onUserResult(User user);
     }
