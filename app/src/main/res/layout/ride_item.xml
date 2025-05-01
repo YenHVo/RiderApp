@@ -63,6 +63,6 @@
         android:background="@android:color/transparent"
         android:contentDescription="Cancel Ride"
         android:layout_marginStart="8dp"
-        app:tint="@android:color/red" />
+        app:tint="#F44336" />
 
 </LinearLayout>

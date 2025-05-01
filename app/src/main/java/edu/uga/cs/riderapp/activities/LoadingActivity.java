@@ -520,6 +520,10 @@ public class LoadingActivity extends AppCompatActivity {
         acceptedRidesRef.child(driverId).child(proposalId).setValue(acceptedRide);
         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRideForRider);
 
+        // Reset statuses to pending to allow confirmation later
+        proposalRef.child("driverStatus").setValue("pending");
+        proposalRef.child("riderStatus").setValue("pending");
+
         // Remove from offered and requested rides
         DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
         DatabaseReference requestedRidesRef = FirebaseDatabase.getInstance().getReference("requested_rides");
