@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -89,10 +90,17 @@ public class LoadingActivity extends AppCompatActivity {
         }
 
         // Initializes UI elements and sets up listeners
+
+        listenForOtherUserRejection();
         initializeViews();
         setupButtonListeners();
         setupDatabaseListener();
+
+
+
     }
+
+
 
     /**
      * Finds and assigns views from the layout.
@@ -529,14 +537,78 @@ public class LoadingActivity extends AppCompatActivity {
      * effectively declining the current proposal.
      */
     private void rejectProposal() {
-        // Reset both statuses to pending
-        proposalRef.child("driverStatus").setValue("pending");
-        proposalRef.child("riderStatus").setValue("pending")
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Proposal declined", Toast.LENGTH_SHORT).show();
+        if (proposalRef == null || currentUserId == null) return;
+
+        proposalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String driverId = snapshot.child("driverId").getValue(String.class);
+                String riderId = snapshot.child("riderId").getValue(String.class);
+
+                if (driverId == null || riderId == null) return;
+
+                Map<String, Object> updates = new HashMap<>();
+
+                if (currentUserId.equals(driverId)) {
+                    updates.put("driverStatus", "rejected");
+                } else if (currentUserId.equals(riderId)) {
+                    updates.put("riderStatus", "rejected");
+                } else {
+                    return; // user is neither driver nor rider
+                }
+
+                proposalRef.updateChildren(updates).addOnSuccessListener(unused -> {
+                    Toast.makeText(LoadingActivity.this, "You have rejected the proposal", Toast.LENGTH_SHORT).show();
                     navigateToHome();
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(LoadingActivity.this, "Failed to reject proposal", Toast.LENGTH_SHORT).show();
                 });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("rejectProposal", "Database error: " + error.getMessage());
+            }
+        });
     }
+    private void listenForOtherUserRejection() {
+        if (proposalRef == null || currentUserId == null) return;
+
+        proposalRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String driverId = snapshot.child("driverId").getValue(String.class);
+                String riderId = snapshot.child("riderId").getValue(String.class);
+                String driverStatus = snapshot.child("driverStatus").getValue(String.class);
+                String riderStatus = snapshot.child("riderStatus").getValue(String.class);
+
+                if (driverId == null || riderId == null) return;
+
+                boolean isDriver = currentUserId.equals(driverId);
+                boolean isRider = currentUserId.equals(riderId);
+
+                if (isDriver && "rejected".equals(riderStatus)) {
+                    showRejectionDialog();
+                } else if (isRider && "rejected".equals(driverStatus)) {
+                    showRejectionDialog();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+    }
+    private void showRejectionDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Proposal Rejected")
+                .setMessage("The other user has rejected the proposal.")
+                .setCancelable(false)
+                .setPositiveButton("Return to Home", (dialog, which) -> navigateToHome())
+                .show();
+    }
+
+
 
     /**
      * Sets the current user's status to "completed" and checks if both parties
