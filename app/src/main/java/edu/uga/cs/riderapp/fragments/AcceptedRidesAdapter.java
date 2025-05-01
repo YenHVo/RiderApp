@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,29 +75,40 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         boolean isDriver = ride.getPoints() != null && ride.getPoints() > 0;
         String proposalId = ride.getProposalId();
         DatabaseReference proposalRef = FirebaseDatabase.getInstance().getReference("proposals").child(proposalId);
+        String statusField = isDriver ? "driverStatus" : "riderStatus";
 
-        // Show button only if current time > ride time
-        if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
-            holder.startRideBtn.setVisibility(View.VISIBLE);
+        // Listen for status updates
+        proposalRef.get().addOnSuccessListener(snapshot -> {
+            String driverStatus = snapshot.child("driverStatus").getValue(String.class);
+            String riderStatus = snapshot.child("riderStatus").getValue(String.class);
 
-            holder.startRideBtn.setOnClickListener(v -> {
-                String statusField = isDriver ? "driverStatus" : "riderStatus";
-                proposalRef.child(statusField).setValue("accepted")
-                        .addOnSuccessListener(aVoid -> {
-                            Intent intent = new Intent(v.getContext(), LoadingActivity.class);
-                            intent.putExtra("proposalId", proposalId);
-                            intent.putExtra("isDriver", isDriver);
-                            v.getContext().startActivity(intent);
-                        });
-            });
-        } else {
-            holder.startRideBtn.setVisibility(View.GONE);
-        }
+            boolean isCancelled = "cancelled".equals(driverStatus) || "cancelled".equals(riderStatus);
+
+            if (isCancelled) {
+                holder.startLocationTextView.setText("Your ride to " + ride.getEndLocation() + " has been cancelled.");
+                holder.endLocationTextView.setText("Please create a new one and try again.");
+                holder.startRideBtn.setVisibility(View.GONE);
+            } else {
+                // Show "Start Ride" button only after scheduled time
+                if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
+                    holder.startRideBtn.setVisibility(View.VISIBLE);
+                    holder.startRideBtn.setOnClickListener(v -> {
+                        proposalRef.child(statusField).setValue("accepted")
+                                .addOnSuccessListener(aVoid -> {
+                                    Intent intent = new Intent(v.getContext(), LoadingActivity.class);
+                                    intent.putExtra("proposalId", proposalId);
+                                    intent.putExtra("isDriver", isDriver);
+                                    v.getContext().startActivity(intent);
+                                });
+                    });
+                } else {
+                    holder.startRideBtn.setVisibility(View.GONE);
+                }
+            }
+        });
 
         // Cancel Button behavior
         holder.cancelRideBtn.setOnClickListener(v -> {
-            String statusField = isDriver ? "driverStatus" : "riderStatus";
-
             // Set current user's status to "cancelled"
             proposalRef.child(statusField).setValue("cancelled")
                     .addOnSuccessListener(aVoid -> {
@@ -128,7 +140,7 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         TextView dateTimeTextView;
         TextView pointsTextView;
         Button startRideBtn;
-        Button cancelRideBtn;
+        ImageButton cancelRideBtn;
 
         /**
          * Constructor binds the views from the ride_item layout.
