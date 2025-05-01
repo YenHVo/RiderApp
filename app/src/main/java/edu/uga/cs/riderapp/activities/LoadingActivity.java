@@ -167,13 +167,15 @@ public class LoadingActivity extends AppCompatActivity {
                         }
 
                         // User who created proposal needs to confirm the other user
-                        /*
-                        if (isOtherPartyAccepted(proposal) && isMyStatusPending(proposal)) {
-                            showConfirmationScreen(proposal);
-                            return;
-                        }*/
                         if ("accepted".equals(isDriver ? proposal.getRiderStatus() : proposal.getDriverStatus()) &&
                                 "pending".equals(isDriver ? proposal.getDriverStatus() : proposal.getRiderStatus())) {
+                            showConfirmationScreen(proposal);
+                            return;
+                        }
+
+                        // User who are returning to the ride set for the future
+                        if ("accepted".equals(isDriver ? proposal.getRiderStatus() : proposal.getDriverStatus()) &&
+                                "incoming".equals(isDriver ? proposal.getDriverStatus() : proposal.getRiderStatus())) {
                             showConfirmationScreen(proposal);
                             return;
                         }
@@ -205,22 +207,6 @@ public class LoadingActivity extends AppCompatActivity {
                 Toast.makeText(LoadingActivity.this, "Failed to load proposal info", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    /**
-     * Helper method to check if the other party has accepted the proposal.
-     */
-    private boolean isOtherPartyAccepted(Proposal proposal) {
-        return isDriver ? "accepted".equals(proposal.getRiderStatus()) :
-                "accepted".equals(proposal.getDriverStatus());
-    }
-
-    /**
-     * Helper method to check if the current user's proposal status is still pending.
-     */
-    private boolean isMyStatusPending(Proposal proposal) {
-        return isDriver ? "pending".equals(proposal.getDriverStatus()) :
-                "pending".equals(proposal.getRiderStatus());
     }
 
     /**
@@ -521,8 +507,8 @@ public class LoadingActivity extends AppCompatActivity {
         acceptedRidesRef.child(riderId).child(proposalId).setValue(acceptedRideForRider);
 
         // Reset statuses to pending to allow confirmation later
-        proposalRef.child("driverStatus").setValue("pending");
-        proposalRef.child("riderStatus").setValue("pending");
+        proposalRef.child("driverStatus").setValue("incoming");
+        proposalRef.child("riderStatus").setValue("incoming");
 
         // Remove from offered and requested rides
         DatabaseReference offeredRidesRef = FirebaseDatabase.getInstance().getReference("offered_rides");
