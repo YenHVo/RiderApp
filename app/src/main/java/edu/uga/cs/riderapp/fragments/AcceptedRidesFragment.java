@@ -1,6 +1,7 @@
 package edu.uga.cs.riderapp.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,8 @@ public class AcceptedRidesFragment extends Fragment {
     private AcceptedRidesAdapter adapter;
     private List<Ride> acceptedRidesList;
     private DatabaseReference acceptedRidesRef;
+    private Handler refreshHandler = new Handler();
+    private Runnable refreshRunnable;
 
     public AcceptedRidesFragment() {
         // Required empty public constructor
@@ -61,6 +64,16 @@ public class AcceptedRidesFragment extends Fragment {
         // Reference to the accepted rides node in Firebase
         acceptedRidesRef = FirebaseDatabase.getInstance().getReference("accepted_rides");
         loadAcceptedRides();
+
+        // Periodically refresh adapter to update time-sensitive buttons
+        refreshRunnable = new Runnable() {
+            @Override
+            public void run() {
+                adapter.notifyDataSetChanged();
+                refreshHandler.postDelayed(this, 5000);
+            }
+        };
+        refreshHandler.postDelayed(refreshRunnable, 5000);
 
         return view;
     }
@@ -91,4 +104,13 @@ public class AcceptedRidesFragment extends Fragment {
             }
         });
     }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (refreshHandler != null && refreshRunnable != null) {
+            refreshHandler.removeCallbacks(refreshRunnable);
+        }
+    }
+
 }
