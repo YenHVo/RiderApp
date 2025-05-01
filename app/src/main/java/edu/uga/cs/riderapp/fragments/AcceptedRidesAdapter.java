@@ -12,8 +12,11 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -78,32 +81,40 @@ public class AcceptedRidesAdapter extends RecyclerView.Adapter<AcceptedRidesAdap
         String statusField = isDriver ? "driverStatus" : "riderStatus";
 
         // Listen for status updates
-        proposalRef.get().addOnSuccessListener(snapshot -> {
-            String driverStatus = snapshot.child("driverStatus").getValue(String.class);
-            String riderStatus = snapshot.child("riderStatus").getValue(String.class);
+        proposalRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String driverStatus = snapshot.child("driverStatus").getValue(String.class);
+                String riderStatus = snapshot.child("riderStatus").getValue(String.class);
 
-            boolean isCancelled = "cancelled".equals(driverStatus) || "cancelled".equals(riderStatus);
+                boolean isCancelled = "cancelled".equals(driverStatus) || "cancelled".equals(riderStatus);
 
-            if (isCancelled) {
-                holder.startLocationTextView.setText("Your ride to " + ride.getEndLocation() + " has been cancelled.");
-                holder.endLocationTextView.setText("Please create a new one and try again.");
-                holder.startRideBtn.setVisibility(View.GONE);
-            } else {
-                // Show "Start Ride" button only after scheduled time
-                if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
-                    holder.startRideBtn.setVisibility(View.VISIBLE);
-                    holder.startRideBtn.setOnClickListener(v -> {
-                        proposalRef.child(statusField).setValue("accepted")
-                                .addOnSuccessListener(aVoid -> {
-                                    Intent intent = new Intent(v.getContext(), LoadingActivity.class);
-                                    intent.putExtra("proposalId", proposalId);
-                                    intent.putExtra("isDriver", isDriver);
-                                    v.getContext().startActivity(intent);
-                                });
-                    });
-                } else {
+                if (isCancelled) {
+                    holder.startLocationTextView.setText("Your ride to " + ride.getEndLocation() + " has been cancelled.");
+                    holder.endLocationTextView.setText("Please create a new one and try again.");
                     holder.startRideBtn.setVisibility(View.GONE);
+                } else {
+                    if (ride.getDateTime() != null && System.currentTimeMillis() >= ride.getDateTime()) {
+                        holder.startRideBtn.setVisibility(View.VISIBLE);
+                        holder.startRideBtn.setOnClickListener(v -> {
+                            String statusField = isDriver ? "driverStatus" : "riderStatus";
+                            proposalRef.child(statusField).setValue("accepted")
+                                    .addOnSuccessListener(aVoid -> {
+                                        Intent intent = new Intent(v.getContext(), LoadingActivity.class);
+                                        intent.putExtra("proposalId", proposalId);
+                                        intent.putExtra("isDriver", isDriver);
+                                        v.getContext().startActivity(intent);
+                                    });
+                        });
+                    } else {
+                        holder.startRideBtn.setVisibility(View.GONE);
+                    }
                 }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(holder.itemView.getContext(), "Failed to load ride status: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
