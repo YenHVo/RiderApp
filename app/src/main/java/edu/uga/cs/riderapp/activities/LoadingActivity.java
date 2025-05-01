@@ -558,16 +558,18 @@ public class LoadingActivity extends AppCompatActivity {
                     return;
                 }
 
-
+                // Set both statuses back to "pending" after rejection
                 updates.put("driverStatus", "pending");
                 updates.put("riderStatus", "pending");
 
                 proposalRef.updateChildren(updates).addOnSuccessListener(unused -> {
-                    if (currentUserId.equals(driverId)) {
+                    if (currentUserId.equals(driverId) || currentUserId.equals(riderId)) {
 
                         showInitialWaitingState();
-                    } else {
+                    }
 
+
+                    else {
                         showRejectionMessage();
                     }
                 }).addOnFailureListener(e -> {
