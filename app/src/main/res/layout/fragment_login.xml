@@ -50,5 +50,13 @@
             android:padding="12dp"
             android:textColor="@android:color/white" />
 
+        <Button
+            android:id="@+id/buttonGoToSignup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Don't have an account? Sign up" />
+
+
     </LinearLayout>
 </ScrollView>

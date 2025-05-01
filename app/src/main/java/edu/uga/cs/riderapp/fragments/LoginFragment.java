@@ -55,17 +55,30 @@ public class LoginFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login, container, false);
 
-        // Initialize views
+
         emailEditText = view.findViewById(R.id.editTextEmail);
         passwordEditText = view.findViewById(R.id.editTextPassword);
         Button loginButton = view.findViewById(R.id.buttonLogin);
 
-        // Initialize Firebase authentication and database
+
         auth = FirebaseAuth.getInstance();
         databaseReference = FirebaseDatabase.getInstance().getReference("users");
 
-        // Set listener to login button
+
         loginButton.setOnClickListener(v -> loginUser());
+
+        Button signupRedirectButton = view.findViewById(R.id.buttonGoToSignup);
+        signupRedirectButton.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                getActivity()
+                        .getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new SignUpFragment())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+
 
         return view;
     }
