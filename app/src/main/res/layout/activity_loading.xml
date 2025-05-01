@@ -259,7 +259,6 @@
                 android:padding="16dp"/>
         </LinearLayout>
 
-        <!-- 📍 Added manageProposalButtons here -->
         <LinearLayout
             android:id="@+id/manageProposalButtons"
             android:layout_width="match_parent"

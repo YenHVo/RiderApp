@@ -112,8 +112,6 @@
             android:inputType="number"/>
     </LinearLayout>
 
-    <!-- New section for Date and Time selection -->
-
     <TextView
         android:id="@+id/dateTimeLabel"
         android:layout_width="match_parent"

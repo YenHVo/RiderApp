@@ -6,7 +6,6 @@
     android:layout_height="wrap_content"
     android:padding="16dp">
 
-    <!-- Date TextView -->
     <TextView
         android:id="@+id/textViewDate"
         android:layout_width="wrap_content"
@@ -18,7 +17,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="4dp"/>
 
-    <!-- Role TextView -->
     <TextView
         android:id="@+id/textViewRole"
         android:layout_width="wrap_content"
@@ -30,7 +28,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginBottom="8dp"/>
 
-    <!-- Start Location TextView -->
     <TextView
         android:id="@+id/textViewStartLocation"
         android:layout_width="0dp"
@@ -43,7 +40,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>
 
-    <!-- End Location TextView -->
     <TextView
         android:id="@+id/textViewEndLocation"
         android:layout_width="0dp"
@@ -54,6 +50,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="4dp"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
 
